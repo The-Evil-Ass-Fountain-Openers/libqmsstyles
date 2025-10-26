@@ -1,6 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "../libqmsstyle.h"
+#include "../style.h"
+
 #include <QMainWindow>
 
 #include <QProcess>
@@ -24,5 +27,7 @@ public slots:
 
 private:
     Ui::MainWindow *ui;
+
+    LibQmsstyle *m_loadedMsstyle;
 };
 #endif // MAINWINDOW_H

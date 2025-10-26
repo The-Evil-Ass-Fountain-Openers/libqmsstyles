@@ -11,10 +11,10 @@ Style::Style(const QString &name, const QUrl &path)
     : QObject{nullptr}
 {
     m_name = name;
-    emit nameChanged();
+    emit nameChanged(m_name);
 
     m_path = path;
-    emit pathChanged();
+    emit pathChanged(m_path);
 
     m_styleDir = QDir(path.toString());
 
@@ -28,6 +28,68 @@ Style::Style(const QString &name, const QUrl &path)
     }
 
     m_filesPrefix = m_name + "_";
+}
+
+QByteArray Style::removeNull(const QByteArray &bytes, const int &start, const int &end)
+{
+    QByteArray result;
+
+    for(int i = 0; i < bytes.length(); i++) {
+        char byte = bytes[i];
+        if(byte == 0) continue;
+        result.push_back(byte);
+    }
+
+    return result;
+}
+
+Style::Version Style::getVersion()
+{
+    bool foundDWMTouch = false;
+    bool foundDWMPen = false;
+    bool foundW8Taskband = false;
+    bool foundVistaQueryBuilder = false;
+    bool foundTaskBand2Light_Taskband2 = false;
+
+    for(StyleClass *classObject : m_classes)
+    {
+        if(classObject->className() == "DWMTouch") {
+            foundDWMTouch = true;
+            continue;
+
+        } else if(classObject->className() == "DWMPen") {
+            foundDWMPen = true;
+            continue;
+
+        } else if(classObject->className() == "W8::TaskbandExtendedUI") {
+            foundW8Taskband = true;
+            continue;
+
+        } else if(classObject->className() == "QueryBuilder") {
+            foundVistaQueryBuilder = true;
+            continue;
+
+        } else if(classObject->className() == "DarkMode::TaskManager") {
+            foundTaskBand2Light_Taskband2 = true;
+            continue;
+
+        }
+    }
+
+    if (foundTaskBand2Light_Taskband2)
+        return Version::Windows11;
+
+    else if (foundW8Taskband)
+        return Version::Windows8;
+
+    else if (foundDWMTouch || foundDWMPen)
+        return Version::Windows10;
+
+    else if (foundVistaQueryBuilder)
+        return Version::WindowsVista;
+
+    else
+        return Version::Windows7;
 }
 
 bool Style::load()
@@ -51,53 +113,27 @@ bool Style::load()
         }
 
         if(classmap.open(QIODevice::ReadOnly)) {
-            QString decoded_classmap(QString(classmap.readAll()).replace('\u0000', ""));
+            QByteArray classmap_array(classmap.readAll());
 
-            // hopefully in every vista+ msstyle these class names remain the same, otherwise, this is f*cked
-            decoded_classmap.replace("documentation",            "documentation ");
-            decoded_classmap.replace("sizevariant.NormalSize",   "sizevariant.NormalSize ");
-            decoded_classmap.replace("sizevariant.Default",      "sizevariant.Default ");
-            decoded_classmap.replace("colorvariant.NormalColor", "colorvariant.NormalColor ");
-            decoded_classmap.replace("globals",                  "globals ");
-            decoded_classmap.replace("sysmetrics",               "sysmetrics ");
+            int lastClass = 0;
+            int foundClasses = 0;
 
-            decoded_classmap.replace("Style", "Style ");
-            decoded_classmap.replace("::", " ");
-
-            QStringList classes = decoded_classmap.split(' ');
-
+            for(int i = 0; i < classmap_array.length(); i += 2)
             {
-                bool dwmpenExists = false;
-                bool dwmtouchExists = false;
-                bool w8_taskbandExists = false;
-                bool querybuilderExists = false;
-                bool darkmode_taskmanagerExists = false;
+                if(classmap_array[i] == 0 && classmap_array[i + 1] == 0) {
+                    if (i - lastClass > 2)
+                    {
+                        StyleClass *classObject = new StyleClass(
+                            foundClasses,
+                            QString::fromUtf8(removeNull(classmap_array.sliced(lastClass, i - lastClass), lastClass, i))
+                        );
+                        m_classes.push_back(classObject);
+                        foundClasses++;
+                    }
 
-                for(int i = 0; i < classes.length(); i++) {
-                    // class is a reserved keyword in C++
-                    QString classID = classes[i];
-
-                    w8_taskbandExists = classID == "W8::TaskBandExtendedUi";
-                    querybuilderExists = classID == "QueryBuilder";
-                    dwmpenExists = classID == "DWMPen";
-                    dwmtouchExists = classID == "DWMTouch";
-                    darkmode_taskmanagerExists = classID == "DarkMode::TaskManager";
-
-                    StyleClass *classObject = new StyleClass(classID);
-                    m_classes.push_front(classObject);
-                    emit classAdded(classObject);
+                    lastClass = i + 2;
                 }
-
-                // get the msstyle windows version with the classes we found
-                if(darkmode_taskmanagerExists) m_version = Style::Windows11;
-                else if(dwmpenExists || dwmtouchExists) m_version = Style::Windows10;
-                else if(w8_taskbandExists) m_version = Style::Windows8;
-                else if(querybuilderExists) m_version = Style::WindowsVista;
-                else m_version = Style::Windows7;
-
-                emit versionChanged(m_version);
             }
-
         } else {
             qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: could not open CMAP file. Style object is invalid.";
 
@@ -106,6 +142,9 @@ bool Style::load()
 
             return false;
         }
+
+        m_version = getVersion();
+        emit versionChanged(m_version);
     }
 
     return true;

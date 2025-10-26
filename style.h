@@ -39,6 +39,9 @@ public:
 
     QList<StyleClass *> classes() { return m_classes; }
 
+    QByteArray removeNull(const QByteArray &bytes, const int &start, const int &end);
+    Version getVersion();
+
     bool load();
 
 signals:

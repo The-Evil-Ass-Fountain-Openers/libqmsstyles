@@ -8,7 +8,7 @@
 
 #include "style.h"
 
-class LIBQMSSTYLE_EXPORT LibQmsstyle : QObject
+class LIBQMSSTYLE_EXPORT LibQmsstyle : public QObject
 {
     Q_OBJECT
 

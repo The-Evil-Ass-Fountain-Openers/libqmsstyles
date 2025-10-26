@@ -16,3 +16,7 @@ At the time of writing this, libqmsstyle is being developed under Qt Creator, wi
 - [ ] Add writing support
 - [ ] Improve included testing app
 - [ ] Add Windows XP MSSTYLE parsing support
+
+## Credits
+
+- [msstyleEditor](https://https://github.com/nptr/msstyleEditor/) code. Big help for figuring out msstyle parsing. 

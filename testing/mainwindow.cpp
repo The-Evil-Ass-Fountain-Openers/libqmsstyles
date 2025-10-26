@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "../libqmsstyle.h"
+#include "../styleclass.h"
 
 #include <QFileInfo>
 #include <QDir>
@@ -27,8 +27,21 @@ MainWindow::~MainWindow()
 void MainWindow::readMsstyle_clicked()
 {
     LibQmsstyle *msstyleParser = new LibQmsstyle;
+    QObject::connect(msstyleParser, &LibQmsstyle::msstyleLoaded, this, [=](Style *loadedStyle){
+        QString className = "class name here";
 
-    msstyleParser->loadMsstyle(QUrl(ui->msstylePath->text()));
+        for(StyleClass *classObject : loadedStyle->classes()) {
+            if(classObject->className() == "Button") className = "class: Button";
+        }
+
+        ui->classname->setText(className);
+
+        ui->extractedPath->setText(loadedStyle->path().toString());
+        ui->version->setText(QString::number(loadedStyle->version()));
+    });
+    if(msstyleParser->loadMsstyle(QUrl(ui->msstylePath->text()))) {
+        m_loadedMsstyle = msstyleParser;
+    }
 }
 
-
+#include "moc_mainwindow.cpp"

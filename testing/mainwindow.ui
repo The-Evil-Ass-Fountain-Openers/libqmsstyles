@@ -129,6 +129,19 @@
      <string>texture here</string>
     </property>
    </widget>
+   <widget class="QLabel" name="version">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>460</y>
+      <width>221</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>msstyle version here</string>
+    </property>
+   </widget>
   </widget>
  </widget>
  <resources/>
