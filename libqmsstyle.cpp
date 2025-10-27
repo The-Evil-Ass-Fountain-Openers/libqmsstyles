@@ -31,13 +31,13 @@ bool LibQmsstyle::loadMsstyle(const QUrl &path)
     m_process = new QProcess();
 
     QObject::connect(m_process, &QProcess::finished, this, [=](){
-        Style *style = new Style(file.fileName(), QUrl(tmp.absolutePath()));
+        Style::Style *style = new Style::Style(file.fileName(), QUrl(tmp.absolutePath()));
         if(!style->invalid()) {
             qDebug() << "libqmsstyle<" + qApp->applicationName() + ">: Style object for " + file.absoluteFilePath() + " was created succesfully.";
 
             style->load();
 
-            this->m_loadedMsstyles.push_front(style);
+            this->m_loadedMsstyles.push_back(style);
             this->msstyleLoaded(style);
         }
     });

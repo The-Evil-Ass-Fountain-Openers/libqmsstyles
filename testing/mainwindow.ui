@@ -77,7 +77,7 @@
      <string>class name here</string>
     </property>
    </widget>
-   <widget class="QLabel" name="cm">
+   <widget class="QLabel" name="partid">
     <property name="geometry">
      <rect>
       <x>60</x>
@@ -87,10 +87,10 @@
      </rect>
     </property>
     <property name="text">
-     <string>content margins here</string>
+     <string>part id here</string>
     </property>
    </widget>
-   <widget class="QLabel" name="sm">
+   <widget class="QLabel" name="stateid">
     <property name="geometry">
      <rect>
       <x>60</x>
@@ -100,7 +100,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>sizing margins here</string>
+     <string>normal state id here</string>
     </property>
    </widget>
    <widget class="QLabel" name="extractedPath">

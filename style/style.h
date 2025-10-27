@@ -4,8 +4,11 @@
 #include <QObject>
 #include <QDir>
 #include <QUrl>
+#include <QHash>
 
-#include "styleclass.h"
+#include "class.h"
+
+namespace Style {
 
 class Style : public QObject
 {
@@ -17,7 +20,7 @@ class Style : public QObject
     Q_PROPERTY(QUrl path READ path NOTIFY pathChanged)
     Q_PROPERTY(Version version READ version NOTIFY versionChanged)
 
-    Q_PROPERTY(QList<StyleClass *> classes READ classes NOTIFY classAdded)
+    Q_PROPERTY(QList<Class> classes READ classes NOTIFY classAdded)
 
 public:
     enum Version {
@@ -37,7 +40,7 @@ public:
     QUrl path() { return m_path; }
     Version version() { return m_version; }
 
-    QList<StyleClass *> classes() { return m_classes; }
+    QList<Class> classes() { return m_classes; }
 
     QByteArray removeNull(const QByteArray &bytes, const int &start, const int &end);
     Version getVersion();
@@ -53,7 +56,7 @@ signals:
     void pathChanged(QUrl path);
     void versionChanged(Style::Version version);
 
-    void classAdded(StyleClass * addedClass);
+    void classAdded(Class *addedClass);
 
 private:
     bool m_invalid = false;
@@ -62,10 +65,12 @@ private:
     QUrl m_path;
     Version m_version;
 
-    QList<StyleClass *> m_classes;
+    QList<Class> m_classes;
 
     QString m_filesPrefix;
     QDir m_styleDir;
 };
+
+}
 
 #endif // STYLE_H

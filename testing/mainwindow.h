@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include "../libqmsstyle.h"
-#include "../style.h"
+#include "../style/style.h"
 
 #include <QMainWindow>
 

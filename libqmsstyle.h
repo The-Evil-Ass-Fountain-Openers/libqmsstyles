@@ -6,7 +6,7 @@
 
 #include "libqmsstyle_global.h"
 
-#include "style.h"
+#include "style/style.h"
 
 class LIBQMSSTYLE_EXPORT LibQmsstyle : public QObject
 {
@@ -18,10 +18,10 @@ public:
     bool loadMsstyle(const QUrl &path);
 
 signals:
-    void msstyleLoaded(Style *loadedStyle);
+    void msstyleLoaded(Style::Style *loadedStyle);
 
 private:
-    QList<Style *> m_loadedMsstyles;
+    QList<Style::Style *> m_loadedMsstyles;
 
     QProcess *m_process;
 };

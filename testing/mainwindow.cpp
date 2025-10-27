@@ -1,7 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "../styleclass.h"
+#include "../style/class.h"
+#include "../style/style.h"
 
 #include <QFileInfo>
 #include <QDir>
@@ -27,14 +28,30 @@ MainWindow::~MainWindow()
 void MainWindow::readMsstyle_clicked()
 {
     LibQmsstyle *msstyleParser = new LibQmsstyle;
-    QObject::connect(msstyleParser, &LibQmsstyle::msstyleLoaded, this, [=](Style *loadedStyle){
+    QObject::connect(msstyleParser, &LibQmsstyle::msstyleLoaded, this, [=](Style::Style *loadedStyle){
         QString className = "class name here";
+        QString partId = "part name here";
+        QString stateId = "state id here";
 
-        for(StyleClass *classObject : loadedStyle->classes()) {
-            if(classObject->className() == "Button") className = "class: Button";
+        for(Style::Class classObject : loadedStyle->classes()) {
+            if(classObject.className == "Button") {
+                className = "class: Button";
+
+                for(Style::Part part : classObject.parts) {
+                    if(part.name == "PUSHBUTTON") {
+                        partId = "part id: " + QString::number(part.id);
+
+                        for(Style::State state : part.states) {
+                            if(state.name == "NORMAL") stateId = "normal state id: " + QString::number(state.id);
+                        }
+                    }
+                }
+            }
         }
 
         ui->classname->setText(className);
+        ui->partid->setText(partId);
+        ui->stateid->setText(stateId);
 
         ui->extractedPath->setText(loadedStyle->path().toString());
         ui->version->setText(QString::number(loadedStyle->version()));

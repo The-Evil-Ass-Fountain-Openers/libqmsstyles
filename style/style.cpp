@@ -1,11 +1,16 @@
 #include "style.h"
 
+#include "visualpartsmap.h"
+#include "propertystream.h"
+
 #include <QFileInfo>
 #include <QByteArrayView>
 #include <QApplication>
 #include <QRegularExpression>
 
 #include <QtLogging>
+
+namespace Style {
 
 Style::Style(const QString &name, const QUrl &path)
     : QObject{nullptr}
@@ -51,25 +56,25 @@ Style::Version Style::getVersion()
     bool foundVistaQueryBuilder = false;
     bool foundTaskBand2Light_Taskband2 = false;
 
-    for(StyleClass *classObject : m_classes)
+    for(Class classObject : m_classes)
     {
-        if(classObject->className() == "DWMTouch") {
+        if(classObject.className == "DWMTouch") {
             foundDWMTouch = true;
             continue;
 
-        } else if(classObject->className() == "DWMPen") {
+        } else if(classObject.className == "DWMPen") {
             foundDWMPen = true;
             continue;
 
-        } else if(classObject->className() == "W8::TaskbandExtendedUI") {
+        } else if(classObject.className == "W8::TaskbandExtendedUI") {
             foundW8Taskband = true;
             continue;
 
-        } else if(classObject->className() == "QueryBuilder") {
+        } else if(classObject.className == "QueryBuilder") {
             foundVistaQueryBuilder = true;
             continue;
 
-        } else if(classObject->className() == "DarkMode::TaskManager") {
+        } else if(classObject.className == "DarkMode::TaskManager") {
             foundTaskBand2Light_Taskband2 = true;
             continue;
 
@@ -123,11 +128,12 @@ bool Style::load()
                 if(classmap_array[i] == 0 && classmap_array[i + 1] == 0) {
                     if (i - lastClass > 2)
                     {
-                        StyleClass *classObject = new StyleClass(
+                        Class classObject(
                             foundClasses,
                             QString::fromUtf8(removeNull(classmap_array.sliced(lastClass, i - lastClass), lastClass, i))
                         );
                         m_classes.push_back(classObject);
+                        emit classAdded(&classObject);
                         foundClasses++;
                     }
 
@@ -142,12 +148,83 @@ bool Style::load()
 
             return false;
         }
+    }
 
-        m_version = getVersion();
-        emit versionChanged(m_version);
+    // TODO: add support for amap later
+
+    m_version = getVersion();
+    emit versionChanged(m_version);
+
+    // build property tree
+    {
+        for(Class &classObject : m_classes) {
+            const QList<VisualPart> visualParts = VisualPartsMap::find(classObject.className, m_version);
+
+            for(VisualPart visualPart : visualParts) {
+                Part part{visualPart.id, visualPart.name};
+
+                for(VisualState visualState : visualPart.states) {
+                    State state{visualState.value, visualState.name};
+                    part.states.append(state);
+                }
+
+                if(part.name == "PUSHBUTTONDROPDOWN") {
+                    qDebug() << "hi";
+                }
+
+                classObject.parts.append(part);
+            }
+        }
+    }
+
+    // load properties
+    {
+        QFile propertiesmap(m_styleDir.absoluteFilePath(m_filesPrefix + "VARIANT_NORMAL"));
+
+        if(!propertiesmap.exists()) {
+            qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: VARIANT_NORMAL file does not exist. Style object is invalid.";
+
+            m_invalid = true;
+            emit invalidChanged();
+
+            return false;
+        }
+
+        if(propertiesmap.open(QIODevice::ReadOnly)) {
+            QByteArray propertiesmap_array(propertiesmap.readAll());
+
+            int cursor = 0;
+
+            // TODO: holy fucking shit this is ass
+            while(cursor < propertiesmap_array.length() - 4)
+            {
+                Property prop = PropertyStream::readNextProperty(propertiesmap_array, cursor);
+
+                for(Class &classObject : m_classes) {
+                    if(classObject.classID == prop.header.classID) {
+
+                        for(Part &partObject : classObject.parts) {
+                            if(partObject.id == prop.header.partID) {
+
+                                for(State &stateObject : partObject.states) {
+                                    if(stateObject.id == prop.header.stateID) {
+                                        stateObject.properties.append(prop);
+                                        break;
+                                    }
+                                }
+
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
     }
 
     return true;
+}
+
 }
 
 #include "moc_style.cpp"
