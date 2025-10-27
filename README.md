@@ -23,6 +23,7 @@ At the time of writing this, libqmsstyle is being developed under Qt Creator, wi
 - [ ] Add writing support
 - [ ] Add AMAP reading support
 - [ ] Convert the current testing app into an MSSTYLE previewer
+    - [ ] Add screenshots
 - [ ] Add Windows XP MSSTYLE parsing support
 
 ## Credits
