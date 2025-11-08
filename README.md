@@ -10,6 +10,18 @@ At the time of writing this, libqmsstyle is being developed under Qt Creator, wi
 
 This library has [LibWres](https://github.com/The-Evil-Ass-Fountain-Openers/LibWres) as a dependency.
 
+## Credits
+
+- [msstyleEditor](https://github.com/nptr/msstyleEditor/) original code that helped out **a lot** with Vista+ MSSTYLE parsing
+
+## Screenshots
+
+![button](screenshots/button.png)
+
+![progressbar background](screenshots/progressbar-bg.png)
+
+![start menu](screenshots/startmenu.png)
+
 ## TODO
 
 - [ ] Finish documentation
@@ -21,11 +33,8 @@ This library has [LibWres](https://github.com/The-Evil-Ass-Fountain-Openers/LibW
 - [ ] Make a singleton which will store every msstyles property for every class, part and state
 - [X] Finish properties reading
 - [ ] Add writing support
+- [ ] Remove alpha premultiplication on IMAGEFILE properties loading
 - [ ] Add AMAP reading support (Windows 8+)
 - [ ] Convert the current testing app into an MSSTYLE previewer (partly done)
 - [ ] Add screenshots
 - [ ] Add Windows XP MSSTYLE parsing support
-
-## Credits
-
-- [msstyleEditor](https://github.com/nptr/msstyleEditor/) original code that helped out **a lot** with Vista+ MSSTYLE parsing
