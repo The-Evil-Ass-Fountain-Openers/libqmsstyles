@@ -1,18 +1,51 @@
 # Introduction
 
-Windows Vista+ MSSTYLE is what contains almost every asset you see in the file explorer, desktop, start menu, taskbar, window frames and common controls, such as the context menu and buttons.
+## WARNING: very unfinished and can be inaccurate
 
-## Layout
+Windows Vista+ msstyles is what contains almost every asset you see in the file explorer, desktop, start menu, taskbar, window frames and common controls, such as the context menu and buttons.
 
-The MSSTYLE format has a specific layout, it being separated in different parts. The parts are the following:
+## General information
+
+msstyles are basically DLL files, but with a different extension. This means that you can grab any msstyles and just open them in a resource editor like ResourceHacker.
+
+The order of msstyles is as follows:
+
+1. Class (the category of the asset)
+2. Part (the exact asset type)
+3. State
+4. Properties
+
+``Common Properties`` seems to be the base state, which then the other states can override some of the properties set in it.
+
+The data in msstyles are split between many resources. The resources are:
+
+### PACKTHEM_VERSION
+
+Unknown. Very small in size.
+
+### MINCOLORDEPTH
+
+Unknown. Also very small in size.
+
+### 16
+
+Contains DLL-like info.
+
+### MUI
+
+Contains the language it was made for at the end of the resource data. Before that, every resource is listed there. The rest is unknown.
+
+### RMAP
+
+Unknown.
 
 ### CMAP
 
-**CMAP** is where the class map of the MSSTYLE is stored in.
+This is where the class map of the msstyles is stored in.
 
 ### VARIANT NORMAL
 
-Unknown.
+From the looks of it, this is where every property value is stored in.
 
 ### VMAP
 
@@ -20,7 +53,7 @@ Unknown.
 
 ### BCMAP
 
-Unknown
+According to an msstyleEditor comment, this is where every class' part is stored in.
 
 ### AMAP
 
@@ -28,8 +61,7 @@ This is where the animation map is stored at in Windows 8 and later.
 
 ### STREAM
 
-This is where DWM pulls the assets for the window frames. 
-
+This is where the atlas image for DWM windows is stored in.
 
 ## 9-slicing
 
@@ -56,7 +88,7 @@ This matters because both the engines have different methods for stretching text
 
 # Properties
 
-MSSTYLE properties dictate how the assets inside the file should be treated; whether they should be tiled, if they should be stretched, how the content inside of it should be positioned, how the texture should be *9-sliced*, if it should be transparent, if it should have a background color, a gradient, etc.
+msstyles properties dictate how the assets inside the file should be treated; whether they should be tiled, if they should be stretched, how the content inside of it should be positioned, how the texture should be *9-sliced*, if it should be transparent, if it should have a background color, a gradient, etc.
 
 ## IMAGEFILE
 
@@ -74,7 +106,7 @@ The format is as follows:
 `4`: top margin
 `1`: bottom margin
 
-**NOTE:** From my testing, some controls seem to outright ignore this property, like the line edit control in Windows Vista.
+**NOTE:** From my testing, some controls can outright ignore this property, like the line edit control in Windows Vista.
 
 ## SIZINGMARGINS
 

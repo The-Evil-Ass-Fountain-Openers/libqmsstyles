@@ -53,9 +53,6 @@ public:
 
     QList<Class> classes() { return m_classes; }
 
-    QByteArray removeNull(const QByteArray &bytes, const int &start, const int &end);
-    Version getVersion();
-
     bool load();
 
 signals:
@@ -80,6 +77,9 @@ private:
 
     // pointer needed because of forward declaration
     wres::WinLibrary *m_resourceTree;
+
+    QByteArray removeNull(const QByteArray &bytes, const int &start, const int &end);
+    Version getVersion();
 };
 
 }
