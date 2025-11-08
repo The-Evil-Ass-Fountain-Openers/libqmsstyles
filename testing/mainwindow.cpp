@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    this->setWindowTitle("libqmsstyle testing application");
+    this->setWindowTitle("libqmsstyles testing application");
     this->setWindowIcon(QIcon::fromTheme("folder"));
 
     QObject::connect(ui->currentClass, &QComboBox::currentIndexChanged, this, &MainWindow::refreshParts);
@@ -48,9 +48,11 @@ void MainWindow::actionTriggered(QAction *action)
 
 void MainWindow::readMsstyles(const QString &file) {
     if(!m_msstyleParser) {
-        m_msstyleParser = new LibQmsstyle;
+        m_msstyleParser = new LibQmsstyles;
 
-        QObject::connect(m_msstyleParser, &LibQmsstyle::msstylesLoaded, this, [=](Style::Style *loadedStyle) {
+        QObject::connect(m_msstyleParser, &LibQmsstyles::msstylesLoaded, this, [=]() {
+            Style::Style *loadedStyle = m_msstyleParser->loadedMsstyles;
+
             switch(loadedStyle->version()) {
             case Style::Style::WindowsXP:
                 ui->statusBar->showMessage("Version: Windows XP");
@@ -85,7 +87,7 @@ void MainWindow::readMsstyles(const QString &file) {
 void MainWindow::refreshParts(int index) {
     ui->currentPart->clear();
     if(m_msstyleParser && index >= 0) {
-        const Style::Class *currentClass = &m_msstyleParser->loadedStyle()->classes().at(index);
+        const Style::Class *currentClass = &m_msstyleParser->loadedMsstyles->classes().at(index);
 
         for(const Style::Part &partObject : currentClass->parts)
             ui->currentPart->addItem(QString::number(partObject.id) + " - " + partObject.name);
@@ -95,7 +97,7 @@ void MainWindow::refreshParts(int index) {
 void MainWindow::refreshStates(int index) {
     ui->currentState->clear();
     if(m_msstyleParser && index >= 0) {
-        const Style::Class *currentClass = &m_msstyleParser->loadedStyle()->classes().at(ui->currentClass->currentIndex());
+        const Style::Class *currentClass = &m_msstyleParser->loadedMsstyles->classes().at(ui->currentClass->currentIndex());
         const Style::Part *currentPart = &currentClass->parts.at(index);
 
         for(const Style::State &stateObject : currentPart->states)
@@ -106,7 +108,7 @@ void MainWindow::refreshStates(int index) {
 void MainWindow::refreshProperties(int index) {
     ui->currentProperty->clear();
     if(m_msstyleParser && index >= 0) {
-        const Style::Class *currentClass = &m_msstyleParser->loadedStyle()->classes().at(ui->currentClass->currentIndex());
+        const Style::Class *currentClass = &m_msstyleParser->loadedMsstyles->classes().at(ui->currentClass->currentIndex());
         const Style::Part *currentPart = &currentClass->parts.at(ui->currentPart->currentIndex());
         const Style::State *currentState = &currentPart->states.at(index);
 
@@ -118,7 +120,7 @@ void MainWindow::refreshProperties(int index) {
 // this sucks
 void MainWindow::refreshProperty(int index) {
     if(m_msstyleParser && index >= 0) {
-        Style::Style *currentStyle = m_msstyleParser->loadedStyle();
+        Style::Style *currentStyle = m_msstyleParser->loadedMsstyles;
         const Style::Class *currentClass = &currentStyle->classes().at(ui->currentClass->currentIndex());
         const Style::Part *currentPart = &currentClass->parts.at(ui->currentPart->currentIndex());
         const Style::State *currentState = &currentPart->states.at(ui->currentState->currentIndex());

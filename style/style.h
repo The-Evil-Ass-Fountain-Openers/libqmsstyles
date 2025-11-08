@@ -53,6 +53,8 @@ public:
 
     QList<Class> classes() { return m_classes; }
 
+    Part *findPart(const QString &name) const;
+
     bool load();
 
 signals:
@@ -71,7 +73,7 @@ private:
 
     QString m_name;
     QUrl m_path;
-    Version m_version;
+    Version m_version = Version::Windows7;
 
     QList<Class> m_classes;
 

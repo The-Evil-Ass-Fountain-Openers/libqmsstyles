@@ -37,6 +37,17 @@ Style::Style(const QString &name, const QString &path)
     }
 }
 
+Part *Style::findPart(const QString &name) const
+{
+    Part *foundPart = nullptr;
+    for(Class classObject : m_classes) {
+        for(Part partObject : classObject.parts) {
+            if(partObject.name == name) foundPart = &partObject;
+        }
+    }
+    return foundPart;
+}
+
 QByteArray Style::removeNull(const QByteArray &bytes, const int &start, const int &end)
 {
     QByteArray result;
@@ -192,7 +203,7 @@ bool Style::load()
         {
             Property prop = PropertyStream::readNextProperty(varmap_data, cursor);
 
-            // read image data and load
+            // read image data, interpret as premultiplied and load into the property
             if(prop.isImage())
             {
                 wres::WinResource *imageFile = nullptr;
@@ -204,7 +215,13 @@ bool Style::load()
 
                 if(imageFile) {
                     QByteArray imageData(imageFile->offset(), imageFile->size());
-                    prop.imagefile.loadFromData(imageData, "PNG");
+
+                    QImage image;
+                    image.loadFromData(imageData, "PNG");
+                    if(prop.name != "DISKSTREAM")
+                        image.reinterpretAsFormat(QImage::Format_ARGB32_Premultiplied);
+
+                    prop.imagefile.convertFromImage(image);
                 }
             }
 

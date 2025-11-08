@@ -26,7 +26,7 @@ qt_add_executable(testing
     ${PROJECT_SOURCES}
 )
 
-target_link_libraries(testing PRIVATE Qt${QT_VERSION_MAJOR}::Widgets qmsstyle)
+target_link_libraries(testing PRIVATE Qt${QT_VERSION_MAJOR}::Widgets qmsstyles)
 
 include(GNUInstallDirs)
 install(TARGETS testing

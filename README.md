@@ -12,7 +12,7 @@ This library has [LibWres](https://github.com/The-Evil-Ass-Fountain-Openers/LibW
 
 ## Credits
 
-- [msstyleEditor](https://github.com/nptr/msstyleEditor/) original code that helped out **a lot** with Vista+ MSSTYLE parsing
+- [msstyleEditor](https://github.com/nptr/msstyleEditor/): original code that helped out **a lot** with Vista+ msstyles parsing
 
 ## Screenshots
 
@@ -33,8 +33,8 @@ This library has [LibWres](https://github.com/The-Evil-Ass-Fountain-Openers/LibW
 - [ ] Make a singleton which will store every msstyles property for every class, part and state
 - [X] Finish properties reading
 - [ ] Add writing support
-- [ ] Remove alpha premultiplication on IMAGEFILE properties loading
+- [X] Remove alpha premultiplication on IMAGEFILE properties loading
 - [ ] Add AMAP reading support (Windows 8+)
-- [ ] Convert the current testing app into an MSSTYLE previewer (partly done)
+- [ ] Convert the current testing app into an msstyles previewer (partly done)
 - [ ] Add better screenshots
-- [ ] Add Windows XP MSSTYLE parsing support
+- [ ] Add Windows XP msstyles parsing support
