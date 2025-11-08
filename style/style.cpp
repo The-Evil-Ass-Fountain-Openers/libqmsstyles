@@ -10,10 +10,12 @@
 
 #include <QtLogging>
 
+#include <wres/winlibrary.h>
+
 namespace Style
 {
 
-Style::Style(const QString &name, const QUrl &path)
+Style::Style(const QString &name, const QString &path)
     : QObject{nullptr}
 {
     m_name = name;
@@ -22,10 +24,9 @@ Style::Style(const QString &name, const QUrl &path)
     m_path = path;
     emit pathChanged(m_path);
 
-    m_dir = QDir(path.toString());
-    emit dirChanged(m_dir);
+    m_resourceTree = new wres::WinLibrary(path.toStdString());
 
-    if(!m_dir.exists())
+    if(!(m_resourceTree->isLoaded() && m_resourceTree->isValid() && m_resourceTree->isPEBinary()))
     {
         qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: extracted msstyle path does not exist. Style object is invalid.";
 
@@ -34,8 +35,6 @@ Style::Style(const QString &name, const QUrl &path)
 
         return;
     }
-
-    m_filesPrefix = m_name + "_";
 }
 
 QByteArray Style::removeNull(const QByteArray &bytes, const int &start, const int &end)
@@ -111,11 +110,11 @@ bool Style::load()
 
     // read CMAP (class map)
     {
-        QFile classmap(m_dir.absoluteFilePath(m_filesPrefix + "CMAP_CMAP"));
+        wres::WinResource *classmapResource = m_resourceTree->findResource("CMAP", "CMAP", "1033");
 
-        if(!classmap.exists())
+        if(!classmapResource)
         {
-            qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: CMAP file does not exist. Style object is invalid.";
+            qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: CMAP does not exist.";
 
             m_invalid = true;
             emit invalidChanged();
@@ -123,39 +122,27 @@ bool Style::load()
             return false;
         }
 
-        if(classmap.open(QIODevice::ReadOnly))
+        QByteArray classmap_data(classmapResource->offset(), classmapResource->size());
+
+        int lastClass = 0;
+        int foundClasses = 0;
+
+        for(int i = 0; i < classmap_data.length(); i += 2)
         {
-            QByteArray classmap_array(classmap.readAll());
-
-            int lastClass = 0;
-            int foundClasses = 0;
-
-            for(int i = 0; i < classmap_array.length(); i += 2)
+            if(classmap_data[i] == 0 && classmap_data[i + 1] == 0)
             {
-                if(classmap_array[i] == 0 && classmap_array[i + 1] == 0)
+                if (i - lastClass > 2)
                 {
-                    if (i - lastClass > 2)
-                    {
-                        Class classObject(
-                            foundClasses,
-                            QString::fromUtf8(removeNull(classmap_array.sliced(lastClass, i - lastClass), lastClass, i))
-                        );
-                        m_classes.push_back(classObject);
-                        emit classAdded(&classObject);
-                        foundClasses++;
-                    }
-                    lastClass = i + 2;
+                    Class classObject(
+                        foundClasses,
+                        QString::fromUtf8(removeNull(classmap_data.sliced(lastClass, i - lastClass), lastClass, i))
+                    );
+                    m_classes.push_back(classObject);
+                    emit classAdded(&classObject);
+                    foundClasses++;
                 }
+                lastClass = i + 2;
             }
-        }
-        else
-        {
-            qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: could not open CMAP file. Style object is invalid.";
-
-            m_invalid = true;
-            emit invalidChanged();
-
-            return false;
         }
     }
 
@@ -177,10 +164,6 @@ bool Style::load()
                     part.states.append(state);
                 }
 
-                if(part.name == "PUSHBUTTONDROPDOWN") {
-                    qDebug() << "hi";
-                }
-
                 classObject.parts.append(part);
             }
         }
@@ -188,10 +171,11 @@ bool Style::load()
 
     // load properties
     {
-        QFile propertiesmap(m_dir.absoluteFilePath(m_filesPrefix + "VARIANT_NORMAL"));
+        wres::WinResource *varmapResource = m_resourceTree->findResource("VARIANT", "NORMAL", "1033");
 
-        if(!propertiesmap.exists()) {
-            qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: VARIANT_NORMAL file does not exist. Style object is invalid.";
+        if(!varmapResource)
+        {
+            qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: VARIANT NORMAL does not exist.";
 
             m_invalid = true;
             emit invalidChanged();
@@ -199,33 +183,47 @@ bool Style::load()
             return false;
         }
 
-        if(propertiesmap.open(QIODevice::ReadOnly)) {
-            QByteArray propertiesmap_array(propertiesmap.readAll());
+        QByteArray varmap_data(varmapResource->offset(), varmapResource->size());
 
-            int cursor = 0;
+        int cursor = 0;
 
-            // TODO: holy fucking shit this is ass
-            while(cursor < propertiesmap_array.length() - 4)
+        // i love this
+        while(cursor < varmap_data.length() - 4)
+        {
+            Property prop = PropertyStream::readNextProperty(varmap_data, cursor);
+
+            // read image data and load
+            if(prop.isImage())
             {
-                Property prop = PropertyStream::readNextProperty(propertiesmap_array, cursor);
+                wres::WinResource *imageFile = nullptr;
 
-                for(Class &classObject : m_classes) {
-                    if(classObject.classID == prop.header.classID) {
+                if(prop.name == "DISKSTREAM")
+                    imageFile = m_resourceTree->findResource("STREAM", std::to_string(prop.value().toInt()), "1033");
+                else
+                    imageFile = m_resourceTree->findResource("IMAGE", std::to_string(prop.value().toInt()), "1033");
 
-                        for(Part &partObject : classObject.parts) {
-                            if(partObject.id == prop.header.partID) {
+                if(imageFile) {
+                    QByteArray imageData(imageFile->offset(), imageFile->size());
+                    prop.imagefile.loadFromData(imageData, "PNG");
+                }
+            }
 
-                                for(State &stateObject : partObject.states) {
-                                    if(stateObject.id == prop.header.stateID) {
-                                        stateObject.properties.append(prop);
-                                        break;
-                                    }
+            for(Class &classObject : m_classes) {
+                if(classObject.classID == prop.header.classID) {
+
+                    for(Part &partObject : classObject.parts) {
+                        if(partObject.id == prop.header.partID) {
+
+                            for(State &stateObject : partObject.states) {
+                                if(stateObject.id == prop.header.stateID) {
+                                    stateObject.properties.append(prop);
+                                    break;
                                 }
-
                             }
-                        }
 
+                        }
                     }
+
                 }
             }
         }

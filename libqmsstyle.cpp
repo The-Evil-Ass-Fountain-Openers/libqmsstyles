@@ -10,46 +10,22 @@ LibQmsstyle::LibQmsstyle()
     : QObject{nullptr}
 {}
 
-bool LibQmsstyle::loadMsstyle(const QString &path)
+Style::Style *LibQmsstyle::loadMsstyle(const QString &path)
 {
-    QFileInfo file(path);
-
-    if(!(file.exists() && file.isFile())) return false;
-
-    QDir tmp("/tmp/");
-
-    tmp.mkdir("libqmsstyle-" + file.baseName());
-    tmp.cd("libqmsstyle-" + file.baseName());
-
-    QStringList args;
-    args.push_front("-x");
-    args.push_front("--all");
-    args.push_front("--raw");
-    args.push_front("--output=" + tmp.absolutePath());
-    args.push_front(file.absoluteFilePath());
-
-    m_process = new QProcess();
-
-    QObject::connect(m_process, &QProcess::finished, this, [=]()
+    QStringList splitPath(path.split("/"));
+    Style::Style *style = new Style::Style(splitPath[splitPath.length() - 1], path);
+    if(!style->invalid())
     {
-        Style::Style *style = new Style::Style(file.fileName(), QUrl(tmp.absolutePath()));
-        if(!style->invalid())
-        {
-            // TODO: put all this debug stuff in a separate class or something idk
-            qDebug() << "libqmsstyle<" + qApp->applicationName() + ">: Style object for " + file.absoluteFilePath() + " was created succesfully.";
+        // TODO: put all this debug stuff in a separate class or something idk
+        qDebug() << "libqmsstyle<" + qApp->applicationName() + ">: Style object for " + path + " was created succesfully.";
 
-            style->load();
+        style->load();
 
-            this->m_loadedMsstyles.push_back(style);
-            this->msstyleLoaded(style);
-        }
-    });
+        this->m_loadedMsstyles.push_back(style);
+        this->msstyleLoaded(style);
+    }
 
-    // TODO: implement our own PE resource reader
-    m_process->start("wrestool", args);
-    m_process->waitForStarted();
-
-    return true;
+    return style;
 }
 
 #include "moc_libqmsstyle.cpp"

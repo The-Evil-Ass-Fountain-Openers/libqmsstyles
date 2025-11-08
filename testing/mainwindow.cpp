@@ -100,9 +100,7 @@ void MainWindow::refreshProperty(int index) {
         const Style::State *currentState = &currentPart->states.at(ui->currentState->currentIndex());
         const Style::Property *currentProperty = &currentState->properties.at(ui->currentProperty->currentIndex());
 
-        if(currentProperty->isImage()) ui->imagefile->setPixmap(
-            QPixmap(currentStyle->dir().absoluteFilePath(currentStyle->name() + "_IMAGE_" + currentProperty->valueString()))
-        );
+        if(currentProperty->isImage()) ui->imagefile->setPixmap(currentProperty->imagefile);
         ui->propertyvalue->setText(currentProperty->valueString());
     }
 }

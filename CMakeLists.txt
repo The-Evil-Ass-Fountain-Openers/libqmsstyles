@@ -10,7 +10,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(LibWres)
+find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS Core Widgets)
 
 add_library(qmsstyle SHARED
   libqmsstyle_global.h
@@ -29,9 +30,12 @@ add_library(qmsstyle SHARED
   util.h util.cpp
 )
 
-target_link_libraries(qmsstyle PRIVATE Qt${QT_MAJOR_VERSION}::Core Qt${QT_MAJOR_VERSION}::Widgets)
-target_link_libraries(qmsstyle PRIVATE Qt6::Core Qt6::Widgets)
-target_link_libraries(qmsstyle PRIVATE Qt6::Core)
+target_link_libraries(qmsstyle
+  PRIVATE
+    Qt${QT_MAJOR_VERSION}::Core
+    Qt${QT_MAJOR_VERSION}::Widgets
+    wres
+)
 
 target_compile_definitions(qmsstyle PRIVATE LIBQMSSTYLE_LIBRARY)
 add_subdirectory(testing)

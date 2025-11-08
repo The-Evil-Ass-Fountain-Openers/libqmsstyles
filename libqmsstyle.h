@@ -15,7 +15,7 @@ class LIBQMSSTYLE_EXPORT LibQmsstyle : public QObject
 public:
     explicit LibQmsstyle();
 
-    bool loadMsstyle(const QString &path);
+    Style::Style *loadMsstyle(const QString &path);
     QList<Style::Style *> loadedStyles() { return m_loadedMsstyles; }
 
 signals:
@@ -23,8 +23,6 @@ signals:
 
 private:
     QList<Style::Style *> m_loadedMsstyles;
-
-    QProcess *m_process;
 };
 
 #endif // LIBQMSSTYLE_H

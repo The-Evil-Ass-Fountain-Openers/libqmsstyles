@@ -4,25 +4,25 @@
 
 ## Introduction
 
-libqmsstyle is a Qt C++ library tailor-made specifically for Windows Vista+ MSSTYLE parsing (soon Windows XP). It is extremely unfinished and some stuff may not work as expected or function names might change in the near future.
+libqmsstyle is a Qt C++ library tailor-made specifically for Windows Vista+ msstyles parsing (soon Windows XP). It is extremely unfinished and some stuff may not work as expected or function names might change in the near future.
 
 At the time of writing this, libqmsstyle is being developed under Qt Creator, with Qt 6.10.0.
+
+This library has [LibWres](https://github.com/The-Evil-Ass-Fountain-Openers/LibWres) as a dependency.
 
 ## TODO
 
 - [ ] Finish documentation
-    - [ ] Vista+ MSSTYLE
-    - [ ] XP MSSTYLE
-- [X] MSSTYLE extraction to ``/tmp/libqmsstyle-msstylename``
-- [X] Add support for reading and storing MSSTYLE classes
-- [X] Add support for getting the parts of an MSSTYLE class
-- [X] Add support for getting the states of an MSSTYLE class part
-- [ ] Make a singleton which will store every MSSTYLE property for every class, part and state
-- [ ] Expose the property types enum
-- [ ] Finish properties reading
+    - [ ] Vista+ msstyles
+    - [ ] XP msstyles
+- [X] Add support for reading and storing msstyles classes
+- [X] Add support for getting the parts of an msstyles class
+- [X] Add support for getting the states of an msstyles class part
+- [ ] Make a singleton which will store every msstyles property for every class, part and state
+- [X] Finish properties reading
 - [ ] Add writing support
-- [ ] Add AMAP reading support
-- [ ] Convert the current testing app into an MSSTYLE previewer
+- [ ] Add AMAP reading support (Windows 8+)
+- [ ] Convert the current testing app into an MSSTYLE previewer (partly done)
     - [ ] Add screenshots
 - [ ] Add Windows XP MSSTYLE parsing support
 
