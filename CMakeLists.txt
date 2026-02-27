@@ -18,83 +18,81 @@ include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
 add_library(qmsstyles SHARED
-  libqmsstyles_global.h
-  libqmsstyles.cpp
-  libqmsstyles.h
+    qmsstyles_global.h
+    qmsstyles.h qmsstyles.cpp
 
-  style/class.h style/class.cpp
-  style/style.h style/style.cpp
-  style/visualpartsmap.h
-  style/visualstatesmap.h
-  style/property.h
-  style/property.cpp
-  style/definitions.h
-  style/visualenumsmap.h
-  style/propertystream.h style/propertystream.cpp
-  util.h util.cpp
-  logging.h logging.cpp
+    style/style.h style/style.cpp
+    style/class.h style/class.cpp
+    style/propertystream.h style/propertystream.cpp
+    style/property.h style/property.cpp
+
+    style/definitions.h
+    style/visualpartsmap.h style/visualstatesmap.h style/visualenumsmap.h
+
+    util.h util.cpp
+    logging.h logging.cpp
 )
 
 target_link_libraries(qmsstyles
-  PRIVATE
-    Qt${QT_MAJOR_VERSION}::Core
-    Qt${QT_MAJOR_VERSION}::Widgets
-    wres
+    PRIVATE
+        Qt${QT_MAJOR_VERSION}::Core
+        Qt${QT_MAJOR_VERSION}::Widgets
+        wres
 )
 
 install(
-  FILES
-    libqmsstyles.h
-    libqmsstyles_global.h
-  DESTINATION
-    ${CMAKE_INSTALL_INCLUDEDIR}/qmsstyles
+    FILES
+        qmsstyles.h
+        qmsstyles_global.h
+    DESTINATION
+        ${CMAKE_INSTALL_INCLUDEDIR}/qmsstyles
 )
 install(
-  FILES
-    style/class.h
-    style/style.h
-    style/visualpartsmap.h
-    style/visualstatesmap.h
-    style/property.h
-    style/definitions.h
-    style/visualenumsmap.h
-    style/propertystream.h
-  DESTINATION
-    ${CMAKE_INSTALL_INCLUDEDIR}/qmsstyles/style/
+    FILES
+        style/class.h
+        style/style.h
+        style/visualpartsmap.h
+        style/visualstatesmap.h
+        style/property.h
+        style/definitions.h
+        style/visualenumsmap.h
+        style/propertystream.h
+    DESTINATION
+        ${CMAKE_INSTALL_INCLUDEDIR}/qmsstyles/style/
 )
 install(
     TARGETS
-      qmsstyles
+        qmsstyles
     EXPORT
-      LibQmsstyles-targets
+        Qmsstyles-targets
     LIBRARY DESTINATION
-      ${CMAKE_INSTALL_LIBDIR}
+        ${CMAKE_INSTALL_LIBDIR}
 )
 
 
 install(
-  EXPORT
-    LibQmsstyles-targets
-  DESTINATION
-    ${CMAKE_INSTALL_LIBDIR}/cmake/LibQmsstyles
+    EXPORT
+        Qmsstyles-targets
+    DESTINATION
+        ${CMAKE_INSTALL_LIBDIR}/cmake/Qmsstyles
 )
 configure_package_config_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/LibQmsstylesConfig.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/LibQmsstylesConfig.cmake"
+    ${CMAKE_CURRENT_SOURCE_DIR}/QmsstylesConfig.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/QmsstylesConfig.cmake"
 
-  INSTALL_DESTINATION
-    ${CMAKE_INSTALL_LIBDIR}/cmake/LibQmsstyles
+    INSTALL_DESTINATION
+        ${CMAKE_INSTALL_LIBDIR}/cmake/Qmsstyles
 )
 install(
-  FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/LibQmsstylesConfig.cmake"
-  DESTINATION
-    ${CMAKE_INSTALL_LIBDIR}/cmake/LibQmsstyles
+    FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/QmsstylesConfig.cmake"
+    DESTINATION
+        ${CMAKE_INSTALL_LIBDIR}/cmake/Qmsstyles
 )
 
 add_definitions(-DHAVE_DIRENT_H=1)
 add_definitions(-D_GNU_SOURCE=1)
 
-target_compile_definitions(qmsstyles PRIVATE LIBQMSSTYLES_LIBRARY)
+target_compile_definitions(qmsstyles PRIVATE QMSSTYLES_LIBRARY)
 
 add_subdirectory(testing)

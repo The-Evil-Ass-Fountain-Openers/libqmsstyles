@@ -8,7 +8,7 @@
 
 #include <QList>
 
-namespace Style
+namespace VisualStyle
 {
 
 struct VisualPart

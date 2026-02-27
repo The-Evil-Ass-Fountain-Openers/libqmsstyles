@@ -8,13 +8,13 @@ libqmsstyles is a Qt C++ library tailor-made specifically for Windows Vista+ mss
 
 This library is being developed under Qt Creator, with Qt 6.10.0.
 
-This library also has [LibWres](https://github.com/The-Evil-Ass-Fountain-Openers/LibWres) as a dependency.
-
 ## Credits
 
 - [msstyleEditor](https://github.com/nptr/msstyleEditor/): original code that helped out **a lot** with Vista+ msstyles parsing
 
 ## Installation
+
+This library depends on [LibWres](https://github.com/The-Evil-Ass-Fountain-Openers/LibWres), so make sure to install it before installing LibQmsstyles.
 
 1. Clone this repository with ``git clone --depth=1 https://github.com/The-Evil-Ass-Fountain-Openers/libqmsstyles.git``, or by downloading the source code directly from the ``Code`` button.
 2. Within the repository folder, run ``sh install.sh`` in a terminal. You can also pass ``--ninja`` as an argument to compile with Ninja instead.
@@ -29,9 +29,6 @@ This library also has [LibWres](https://github.com/The-Evil-Ass-Fountain-Openers
 
 ## TODO
 
-- [ ] Finish documentation
-    - [ ] Vista+ msstyles
-    - [ ] XP msstyles
 - [X] Add support for reading and storing msstyles classes
 - [X] Add support for getting the parts of an msstyles class
 - [X] Add support for getting the states of an msstyles class part

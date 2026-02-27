@@ -9,7 +9,7 @@
 #include <QPixmap>
 #include <QVariant>
 
-namespace Style
+namespace VisualStyle
 {
 
 class PropertyHeader

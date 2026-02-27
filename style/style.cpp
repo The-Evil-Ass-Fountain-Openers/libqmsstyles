@@ -12,17 +12,17 @@
 
 #include <wres/winlibrary.h>
 
-namespace Style
+namespace VisualStyle
 {
 
 Style::Style(const QString &name, const QString &path)
     : QObject{nullptr}
 {
     m_name = name;
-    emit nameChanged(m_name);
+    Q_EMIT nameChanged(m_name);
 
     m_path = path;
-    emit pathChanged(m_path);
+    Q_EMIT pathChanged(m_path);
 
     m_resourceTree = new wres::WinLibrary(path.toStdString());
 
@@ -31,21 +31,20 @@ Style::Style(const QString &name, const QString &path)
         qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: extracted msstyle path does not exist. Style object is invalid.";
 
         m_invalid = true;
-        emit invalidChanged();
+        Q_EMIT invalidChanged();
 
         return;
     }
 }
 
-Part *Style::findPart(const QString &name) const
+const Class *Style::findClass(const QString &name) const
 {
-    Part *foundPart = nullptr;
-    for(Class classObject : m_classes) {
-        for(Part partObject : classObject.parts) {
-            if(partObject.name == name) foundPart = &partObject;
-        }
-    }
-    return foundPart;
+    auto it = std::find_if(m_classes.constBegin(), m_classes.constEnd(), [&](const Class classObject){
+        return classObject.className == name;
+    });
+
+    if(it != m_classes.constEnd()) return &(*it);
+    else return nullptr;
 }
 
 QByteArray Style::removeNull(const QByteArray &bytes, const int &start, const int &end)
@@ -112,7 +111,7 @@ Style::Version Style::getVersion()
 }
 
 bool Style::load()
-{
+{    
     if(m_invalid)
     {
         qWarning() << "libqmsstyle<" + qApp->applicationName() + ">: attempted to load an invalid Style object.";
@@ -121,14 +120,14 @@ bool Style::load()
 
     // read CMAP (class map)
     {
-        wres::WinResource *classmapResource = m_resourceTree->findResource("CMAP", "CMAP", "1033");
+        wres::WinResource *classmapResource = &m_resourceTree->findResource("CMAP", "CMAP", "")->children().at(0);
 
         if(!classmapResource)
         {
             qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: CMAP does not exist.";
 
             m_invalid = true;
-            emit invalidChanged();
+            Q_EMIT invalidChanged();
 
             return false;
         }
@@ -149,7 +148,7 @@ bool Style::load()
                         QString::fromUtf8(removeNull(classmap_data.sliced(lastClass, i - lastClass), lastClass, i))
                     );
                     m_classes.push_back(classObject);
-                    emit classAdded(&classObject);
+                    Q_EMIT classAdded(&classObject);
                     foundClasses++;
                 }
                 lastClass = i + 2;
@@ -160,7 +159,7 @@ bool Style::load()
     // TODO: add support for amap later
 
     m_version = getVersion();
-    emit versionChanged(m_version);
+    Q_EMIT versionChanged(m_version);
 
     // build property tree
     {
@@ -182,14 +181,14 @@ bool Style::load()
 
     // load properties
     {
-        wres::WinResource *varmapResource = m_resourceTree->findResource("VARIANT", "NORMAL", "1033");
+        wres::WinResource *varmapResource = &m_resourceTree->findResource("VARIANT", "NORMAL", "")->children().at(0);
 
         if(!varmapResource)
         {
             qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: VARIANT NORMAL does not exist.";
 
             m_invalid = true;
-            emit invalidChanged();
+            Q_EMIT invalidChanged();
 
             return false;
         }
@@ -209,9 +208,9 @@ bool Style::load()
                 wres::WinResource *imageFile = nullptr;
 
                 if(prop.name == "DISKSTREAM")
-                    imageFile = m_resourceTree->findResource("STREAM", std::to_string(prop.value().toInt()), "1033");
+                    imageFile = &m_resourceTree->findResource("STREAM", std::to_string(prop.value().toInt()), "")->children().at(0);
                 else
-                    imageFile = m_resourceTree->findResource("IMAGE", std::to_string(prop.value().toInt()), "1033");
+                    imageFile = &m_resourceTree->findResource("IMAGE", std::to_string(prop.value().toInt()), "")->children().at(0);
 
                 if(imageFile) {
                     QByteArray imageData(imageFile->offset(), imageFile->size());

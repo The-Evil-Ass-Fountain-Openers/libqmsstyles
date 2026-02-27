@@ -6,7 +6,7 @@
 
 #include <QtLogging>
 
-namespace Style
+namespace VisualStyle
 {
 
 PropertyHeader::PropertyHeader(qint32 name, qint32 type)

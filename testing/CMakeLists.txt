@@ -26,7 +26,7 @@ qt_add_executable(testing
     ${PROJECT_SOURCES}
 )
 
-target_link_libraries(testing PRIVATE Qt${QT_VERSION_MAJOR}::Widgets qmsstyles)
+target_link_libraries(testing PUBLIC Qt${QT_VERSION_MAJOR}::Widgets qmsstyles)
 
 install(TARGETS testing
     BUNDLE DESTINATION .

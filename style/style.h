@@ -17,7 +17,7 @@ namespace wres
 class WinLibrary;
 }
 
-namespace Style
+namespace VisualStyle
 {
 
 class Style : public QObject
@@ -53,18 +53,18 @@ public:
 
     QList<Class> classes() { return m_classes; }
 
-    Part *findPart(const QString &name) const;
+    const Class *findClass(const QString &name) const;
 
     bool load();
 
-signals:
+Q_SIGNALS:
     void loaded();
 
     void invalidChanged();
 
     void nameChanged(QString name);
     void pathChanged(QUrl path);
-    void versionChanged(Style::Style::Version version);
+    void versionChanged(VisualStyle::Style::Version version);
 
     void classAdded(Class *addedClass);
 

@@ -3,7 +3,7 @@
 
 #include <QHash>
 
-namespace Style
+namespace VisualStyle
 {
 
 static QHash<QString, qint32> NAMES {

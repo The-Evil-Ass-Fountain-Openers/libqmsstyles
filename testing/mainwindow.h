@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "../libqmsstyles.h"
+#include "../qmsstyles.h"
 
 #include <QMainWindow>
 
@@ -35,7 +35,8 @@ public slots:
 private:
     Ui::MainWindow *ui;
 
-    LibQmsstyles *m_msstyleParser = nullptr;
+    Qmsstyles *m_msstyleParser = nullptr;
+    VisualStyle::Style *m_loadedStyle = nullptr;
     QFileDialog *m_fileDlg = nullptr;
 };
 #endif // MAINWINDOW_H

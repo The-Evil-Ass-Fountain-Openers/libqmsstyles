@@ -5,7 +5,7 @@
 #include <QColor>
 #include <QSize>
 
-namespace Style
+namespace VisualStyle
 {
 
 Property PropertyStream::readNextProperty(QByteArray data, int &start)

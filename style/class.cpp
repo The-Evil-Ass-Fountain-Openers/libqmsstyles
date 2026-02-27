@@ -2,7 +2,7 @@
 
 #include <QApplication>
 
-namespace Style
+namespace VisualStyle
 {
 
 Class::Class(int id, QString name)
@@ -15,6 +15,16 @@ Class::Class(int id, QString name)
 
     className = name;
     classID = id;
+}
+
+const Part *Class::findPart(const QString &name) const
+{
+    auto it = std::find_if(parts.constBegin(), parts.constEnd(), [&](const Part partObject){
+        return partObject.name == name;
+    });
+
+    if(it != parts.constEnd()) return &(*it);
+    else return nullptr;
 }
 
 }
