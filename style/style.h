@@ -69,7 +69,7 @@ Q_SIGNALS:
     void classAdded(Class *addedClass);
 
 private:
-    bool m_invalid = false;
+    bool m_invalid{false};
 
     QString m_name;
     QUrl m_path;

@@ -27,9 +27,15 @@ VisualStyle::Style *Qmsstyles::load(const QString &path)
     // this style object is already loaded
     if(style) return style;
 
+    // empty (why)
+    if(path.isEmpty()) return nullptr;
+
+    // does not exist
+    QFileInfo info(path);
+    if(!info.exists()) return nullptr;
+
     // otherwise, attempt to load it
-    QStringList splitPath(path.split("/"));
-    style = new VisualStyle::Style(splitPath[splitPath.length() - 1], path);
+    style = new VisualStyle::Style(info.baseName(), path);
 
     if(!style->invalid()) {
         style->load();
