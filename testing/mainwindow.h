@@ -35,8 +35,8 @@ public slots:
 private:
     Ui::MainWindow *ui;
 
-    Qmsstyles *m_msstyleParser = nullptr;
-    VisualStyle::Style *m_loadedStyle = nullptr;
-    QFileDialog *m_fileDlg = nullptr;
+    Qmsstyles *m_msstyleParser{nullptr};
+    QSharedPointer<VisualStyle::Style> m_loadedStyle;
+    QFileDialog *m_fileDlg{nullptr};
 };
 #endif // MAINWINDOW_H

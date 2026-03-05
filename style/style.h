@@ -43,15 +43,16 @@ public:
         Windows11
     };
 
-    explicit Style(const QString &name, const QString &path);
+    explicit Style(const QString &name, const QString &path, QObject *parent = nullptr);
+    ~Style();
 
-    bool invalid() { return m_invalid; }
+    bool invalid();
 
-    QString name() { return m_name; }
-    QUrl path() { return m_path; }
-    Version version() { return m_version; }
+    QString name();
+    QUrl path();
+    Version version();
 
-    QList<Class> classes() { return m_classes; }
+    QList<Class> classes();
 
     const Class *findClass(const QString &name) const;
 
@@ -69,6 +70,9 @@ Q_SIGNALS:
     void classAdded(Class *addedClass);
 
 private:
+    QByteArray removeNull(const QByteArray &bytes, const int &start, const int &end);
+    Version getVersion();
+
     bool m_invalid{false};
 
     QString m_name;
@@ -79,9 +83,6 @@ private:
 
     // pointer needed because of forward declaration
     wres::WinLibrary *m_resourceTree;
-
-    QByteArray removeNull(const QByteArray &bytes, const int &start, const int &end);
-    Version getVersion();
 };
 
 }

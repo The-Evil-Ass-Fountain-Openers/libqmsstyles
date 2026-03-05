@@ -8,21 +8,19 @@
 #include <QFileInfo>
 
 
-static QHash<QString, VisualStyle::Style *> s_loadedStyles;
-static int s_accessCount = 0;
+static QHash<QString, QSharedPointer<VisualStyle::Style>> s_loadedStyles;
 
 
 Qmsstyles *Qmsstyles::self()
 {
     static Qmsstyles *s_instance = new Qmsstyles;
-    qDebug() << "libqmsstyles access count:" << ++s_accessCount;
     return s_instance;
 }
 
 
-VisualStyle::Style *Qmsstyles::load(const QString &path)
+QSharedPointer<VisualStyle::Style> Qmsstyles::load(const QString &path)
 {
-    VisualStyle::Style *style = get(path);
+    QSharedPointer<VisualStyle::Style> style = get(path);
 
     // this style object is already loaded
     if(style) return style;
@@ -35,7 +33,7 @@ VisualStyle::Style *Qmsstyles::load(const QString &path)
     if(!info.exists()) return nullptr;
 
     // otherwise, attempt to load it
-    style = new VisualStyle::Style(info.baseName(), path);
+    style.reset(new VisualStyle::Style(info.baseName(), path, this));
 
     if(!style->invalid()) {
         style->load();
@@ -44,38 +42,39 @@ VisualStyle::Style *Qmsstyles::load(const QString &path)
         Q_EMIT styleListUpdated();
 
         return style;
-    } else delete style;
+    } else style.clear();
 
     // fail
-    return nullptr;
+    return style;
 }
 
 void Qmsstyles::unload(const QString &path)
 {
-    if(s_loadedStyles.contains(path));
-    unload(s_loadedStyles.value(path));
+    if(s_loadedStyles.contains(path))
+        unload(s_loadedStyles.value(path));
 }
 
-void Qmsstyles::unload(VisualStyle::Style *style)
+void Qmsstyles::unload(QSharedPointer<VisualStyle::Style> style)
 {
     s_loadedStyles.values().removeAt(s_loadedStyles.values().indexOf(style));
     Q_EMIT styleListUpdated();
 
     Q_EMIT styleUnloaded(style);
-    delete style;
+    style.clear();
 }
 
 
-VisualStyle::Style *Qmsstyles::get(const QString &path)
+QSharedPointer<VisualStyle::Style> Qmsstyles::get(const QString &path)
 {
-    if(s_loadedStyles.contains(path)) return s_loadedStyles.value(path);
-    else return nullptr;
+    if(s_loadedStyles.contains(path)) {
+        return s_loadedStyles.value(path);
+    } else {
+        return nullptr;
+    }
 }
 
-QList<VisualStyle::Style *> Qmsstyles::styles()
-{
-    return s_loadedStyles.values();
-}
+QList<QSharedPointer<VisualStyle::Style>> Qmsstyles::styles()
+{ return s_loadedStyles.values(); }
 
 
 Qmsstyles::Qmsstyles()
@@ -83,6 +82,6 @@ Qmsstyles::Qmsstyles()
 {  }
 
 Qmsstyles::~Qmsstyles()
-{ qDeleteAll(s_loadedStyles.values()); }
+{  }
 
 #include "moc_qmsstyles.cpp"

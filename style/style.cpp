@@ -15,8 +15,8 @@
 namespace VisualStyle
 {
 
-Style::Style(const QString &name, const QString &path)
-    : QObject{nullptr}
+Style::Style(const QString &name, const QString &path, QObject *parent)
+    : QObject{parent}
 {
     m_name = name;
     Q_EMIT nameChanged(m_name);
@@ -37,6 +37,28 @@ Style::Style(const QString &name, const QString &path)
     }
 }
 
+Style::~Style()
+{ delete m_resourceTree; }
+
+
+bool Style::invalid()
+{ return m_invalid; }
+
+
+QString Style::name()
+{ return m_name; }
+
+QUrl Style::path()
+{ return m_path; }
+
+Style::Version Style::version()
+{ return m_version; }
+
+
+QList<Class> Style::classes()
+{ return m_classes; }
+
+
 const Class *Style::findClass(const QString &name) const
 {
     auto it = std::find_if(m_classes.constBegin(), m_classes.constEnd(), [&](const Class classObject){
@@ -47,68 +69,6 @@ const Class *Style::findClass(const QString &name) const
     else return nullptr;
 }
 
-QByteArray Style::removeNull(const QByteArray &bytes, const int &start, const int &end)
-{
-    QByteArray result;
-
-    for(int i = 0; i < bytes.length(); i++)
-    {
-        char byte = bytes[i];
-        if(byte == 0) continue;
-        result.push_back(byte);
-    }
-
-    return result;
-}
-
-Style::Version Style::getVersion()
-{
-    bool foundDWMTouch = false;
-    bool foundDWMPen = false;
-    bool foundW8Taskband = false;
-    bool foundVistaQueryBuilder = false;
-    bool foundTaskBand2Light_Taskband2 = false;
-
-    for(Class classObject : m_classes)
-    {
-        if(classObject.className == "DWMTouch")
-        {
-            foundDWMTouch = true;
-            continue;
-        }
-        else if(classObject.className == "DWMPen")
-        {
-            foundDWMPen = true;
-            continue;
-        }
-        else if(classObject.className == "W8::TaskbandExtendedUI")
-        {
-            foundW8Taskband = true;
-            continue;
-        }
-        else if(classObject.className == "QueryBuilder")
-        {
-            foundVistaQueryBuilder = true;
-            continue;
-        }
-        else if(classObject.className == "DarkMode::TaskManager")
-        {
-            foundTaskBand2Light_Taskband2 = true;
-            continue;
-        }
-    }
-
-    if (foundTaskBand2Light_Taskband2)
-        return Version::Windows11;
-    else if (foundW8Taskband)
-        return Version::Windows8;
-    else if (foundDWMTouch || foundDWMPen)
-        return Version::Windows10;
-    else if (foundVistaQueryBuilder)
-        return Version::WindowsVista;
-    else
-        return Version::Windows7;
-}
 
 bool Style::load()
 {    
@@ -246,6 +206,70 @@ bool Style::load()
     }
 
     return true;
+}
+
+
+QByteArray Style::removeNull(const QByteArray &bytes, const int &start, const int &end)
+{
+    QByteArray result;
+
+    for(int i = 0; i < bytes.length(); i++)
+    {
+        char byte = bytes[i];
+        if(byte == 0) continue;
+        result.push_back(byte);
+    }
+
+    return result;
+}
+
+Style::Version Style::getVersion()
+{
+    bool foundDWMTouch = false;
+    bool foundDWMPen = false;
+    bool foundW8Taskband = false;
+    bool foundVistaQueryBuilder = false;
+    bool foundTaskBand2Light_Taskband2 = false;
+
+    for(Class classObject : m_classes)
+    {
+        if(classObject.className == "DWMTouch")
+        {
+            foundDWMTouch = true;
+            continue;
+        }
+        else if(classObject.className == "DWMPen")
+        {
+            foundDWMPen = true;
+            continue;
+        }
+        else if(classObject.className == "W8::TaskbandExtendedUI")
+        {
+            foundW8Taskband = true;
+            continue;
+        }
+        else if(classObject.className == "QueryBuilder")
+        {
+            foundVistaQueryBuilder = true;
+            continue;
+        }
+        else if(classObject.className == "DarkMode::TaskManager")
+        {
+            foundTaskBand2Light_Taskband2 = true;
+            continue;
+        }
+    }
+
+    if (foundTaskBand2Light_Taskband2)
+        return Version::Windows11;
+    else if (foundW8Taskband)
+        return Version::Windows8;
+    else if (foundDWMTouch || foundDWMPen)
+        return Version::Windows10;
+    else if (foundVistaQueryBuilder)
+        return Version::WindowsVista;
+    else
+        return Version::Windows7;
 }
 
 }
