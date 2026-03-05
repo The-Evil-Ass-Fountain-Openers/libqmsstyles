@@ -17,9 +17,7 @@ struct State
     QList<Property> properties;
 
     const Property *getProperty(const QString &name) const {
-        qDebug() << "libqmsstyles: starting property search";
         auto it = std::find_if(properties.constBegin(), properties.constEnd(), [&](const Property property){
-            qDebug() << "libqmsstyles: looking for property " + name + " in " + this->name + "; current property: " + property.name;
             return property.name == name;
         });
 
