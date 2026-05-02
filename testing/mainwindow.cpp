@@ -25,7 +25,24 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(ui->currentState, &QComboBox::currentIndexChanged, this, &MainWindow::refreshProperties);
     QObject::connect(ui->currentProperty, &QComboBox::currentIndexChanged, this, &MainWindow::refreshProperty);
 
-    QObject::connect(ui->menuBar, &QMenuBar::triggered, this, &MainWindow::actionTriggered);
+    QObject::connect(ui->actionOpen, &QAction::triggered, [&]() {
+        auto *fileDlg = new QFileDialog(this, "Open an msstyles file", QDir::homePath(), "Windows msstyles files (*.msstyles)");
+        QObject::connect(fileDlg, &QFileDialog::fileSelected, this, &MainWindow::readMsstyles);
+
+        fileDlg->open();
+    });
+    QObject::connect(ui->actionSaveImageAs, &QAction::triggered, [&]() {
+        if (ui->imagefile->pixmap().isNull()) return;
+
+        auto *fileDlg = new QFileDialog(nullptr, "Save image as", QDir::homePath(), "PNG images (*.png)");
+        fileDlg->setAcceptMode(QFileDialog::AcceptMode::AcceptSave);
+        fileDlg->selectFile(ui->imagefile->property("resName").value<QString>() + ".png");
+        QObject::connect(fileDlg, &QFileDialog::fileSelected, [&](const QString &file) {
+            ui->imagefile->pixmap().save(file, "PNG");
+        });
+
+        fileDlg->open();
+    });
 
     m_msstyleParser = Qmsstyles::self();
 }
@@ -33,18 +50,6 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete m_fileDlg;
-}
-
-// there's not gonna be any other actions soooo
-void MainWindow::actionTriggered(QAction *action)
-{
-    if(!m_fileDlg) {
-        m_fileDlg = new QFileDialog(nullptr, "Open an msstyles file", QDir::homePath(), "Windows msstyles files (*.msstyles)");
-        QObject::connect(m_fileDlg, &QFileDialog::fileSelected, this, &MainWindow::readMsstyles);
-    }
-
-    m_fileDlg->open();
 }
 
 void MainWindow::readMsstyles(const QString &file)
@@ -119,7 +124,10 @@ void MainWindow::refreshProperty(int index) {
         const VisualStyle::State *currentState = &currentPart->states.at(ui->currentState->currentIndex());
         const VisualStyle::Property *currentProperty = &currentState->properties.at(ui->currentProperty->currentIndex());
 
-        if(currentProperty->isImage()) ui->imagefile->setPixmap(currentProperty->imagefile);
+        if(currentProperty->isImage()) {
+            ui->imagefile->setPixmap(currentProperty->imagefile);
+            ui->imagefile->setProperty("resName", currentProperty->valueString());
+        }
         ui->propertyvalue->setText(currentProperty->valueString());
     }
 }

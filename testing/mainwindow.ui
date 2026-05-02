@@ -135,7 +135,7 @@
      <x>0</x>
      <y>0</y>
      <width>685</width>
-     <height>18</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -143,12 +143,33 @@
      <string>File</string>
     </property>
     <addaction name="actionOpen"/>
+    <addaction name="actionSaveImageAs"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
   <action name="actionOpen">
+   <property name="icon">
+    <iconset theme="document-open"/>
+   </property>
    <property name="text">
-    <string>Open</string>
+    <string>&amp;Open</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionSaveImageAs">
+   <property name="icon">
+    <iconset theme="document-save-as"/>
+   </property>
+   <property name="text">
+    <string>Save &amp;image as</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+S</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
  </widget>

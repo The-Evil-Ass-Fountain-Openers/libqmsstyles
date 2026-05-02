@@ -24,7 +24,6 @@ public:
     ~MainWindow();
 
 public slots:
-    void actionTriggered(QAction *action);
     void readMsstyles(const QString &file);
 
     void refreshParts(int index);
