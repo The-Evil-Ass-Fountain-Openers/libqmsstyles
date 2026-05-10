@@ -1,30 +1,95 @@
 #include "class.h"
 
-#include <QApplication>
-
 namespace VisualStyle
 {
 
-Class::Class(int id, QString name)
+State::State(int id, QString name)
+    : m_id(id)
+    , m_name(name)
 {
-    if(name == "")
-    {
-        qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: cannot construct StyleClass with an empty class name.";
-        return;
-    }
-
-    className = name;
-    classID = id;
 }
 
-const Part *Class::findPart(const QString &name) const
+QString State::name() const
 {
-    auto it = std::find_if(parts.constBegin(), parts.constEnd(), [&](const Part partObject){
-        return partObject.name == name;
-    });
+    return m_name;
+}
 
-    if(it != parts.constEnd()) return &(*it);
-    else return nullptr;
+int State::id() const
+{
+    return m_id;
+}
+
+QList<Property> State::properties() const
+{
+    return m_properties;
+}
+
+void State::addProperty(Property property)
+{
+    m_properties.append(property);
+}
+
+Part::Part(int id, QString name)
+    : m_id(id)
+    , m_name(name)
+{
+}
+
+QString Part::name() const
+{
+    return m_name;
+}
+
+int Part::id() const
+{
+    return m_id;
+}
+
+QList<State> Part::states() const
+{
+    return m_states;
+}
+
+void Part::addState(State state)
+{
+    m_states.append(state);
+}
+
+Class::Class(int id, QString name)
+    : m_id(id)
+    , m_name(name)
+    , m_baseClass(nullptr)
+{
+}
+
+QString Class::name() const
+{
+    return m_name;
+}
+
+const Class *Class::baseClass() const
+{
+    return m_baseClass;
+}
+
+void Class::setBaseClass(const Class *baseClass)
+{
+    m_baseClass = baseClass;
+}
+
+int Class::id() const
+{
+    return m_id;
+}
+
+QList<Part> Class::parts() const
+{
+    return m_parts;
+}
+
+void Class::addPart(Part part)
+{
+    m_parts.append(part);
 }
 
 }

@@ -1,13 +1,13 @@
 #include "style.h"
 
 #include "visualpartsmap.h"
-#include "propertystream.h"
 
 #include <QFileInfo>
 #include <QByteArrayView>
 #include <QApplication>
 #include <QRegularExpression>
 
+#include <QtEndian>
 #include <QtLogging>
 
 #include <wres/winlibrary.h>
@@ -17,210 +17,128 @@ namespace VisualStyle
 
 Style::Style(const QString &name, const QString &path, QObject *parent)
     : QObject{parent}
+    , m_name(name)
+    , m_path(path)
+    , m_resourceTree(new wres::WinLibrary(path.toStdString()))
 {
-    m_name = name;
-    Q_EMIT nameChanged(m_name);
-
-    m_path = path;
-    Q_EMIT pathChanged(m_path);
-
-    m_resourceTree = new wres::WinLibrary(path.toStdString());
-
-    if(!(m_resourceTree->isLoaded() && m_resourceTree->isValid() && m_resourceTree->isPEBinary()))
-    {
-        qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: extracted msstyle path does not exist. Style object is invalid.";
-
+    if (!(m_resourceTree->isLoaded() && m_resourceTree->isValid() && m_resourceTree->isPEBinary())) {
+        qFatal() << "failed to parse msstyles";
         m_invalid = true;
         Q_EMIT invalidChanged();
-
         return;
     }
 }
 
 Style::~Style()
-{ delete m_resourceTree; }
-
-
-bool Style::invalid()
-{ return m_invalid; }
-
-
-QString Style::name()
-{ return m_name; }
-
-QUrl Style::path()
-{ return m_path; }
-
-Style::Version Style::version()
-{ return m_version; }
-
-
-QList<Class> Style::classes()
-{ return m_classes; }
-
-
-const Class *Style::findClass(const QString &name) const
 {
-    auto it = std::find_if(m_classes.constBegin(), m_classes.constEnd(), [&](const Class classObject){
-        return classObject.className == name;
-    });
-
-    if(it != m_classes.constEnd()) return &(*it);
-    else return nullptr;
+    delete m_resourceTree;
 }
 
+bool Style::invalid()
+{
+    return m_invalid;
+}
+
+QString Style::name()
+{
+    return m_name;
+}
+
+QString Style::path()
+{
+    return m_path;
+}
+
+Style::Version Style::version()
+{
+    return m_version;
+}
+
+QList<Class> Style::classes()
+{
+    return m_classes;
+}
 
 bool Style::load()
 {    
-    if(m_invalid)
-    {
-        qWarning() << "libqmsstyle<" + qApp->applicationName() + ">: attempted to load an invalid Style object.";
+    if (m_invalid) {
+        qWarning() << "invalid msstyles";
         return false;
     }
 
-    // read CMAP (class map)
-    {
-        wres::WinResource *classmapResource = &m_resourceTree->findResource("CMAP", "CMAP", "")->children().at(0);
-
-        if(!classmapResource)
-        {
-            qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: CMAP does not exist.";
-
-            m_invalid = true;
-            Q_EMIT invalidChanged();
-
-            return false;
-        }
-
-        QByteArray classmap_data(classmapResource->offset(), classmapResource->size());
-
-        int lastClass = 0;
-        int foundClasses = 0;
-
-        for(int i = 0; i < classmap_data.length(); i += 2)
-        {
-            if(classmap_data[i] == 0 && classmap_data[i + 1] == 0)
-            {
-                if (i - lastClass > 2)
-                {
-                    Class classObject(
-                        foundClasses,
-                        QString::fromUtf8(removeNull(classmap_data.sliced(lastClass, i - lastClass), lastClass, i))
-                    );
-                    m_classes.push_back(classObject);
-                    Q_EMIT classAdded(&classObject);
-                    foundClasses++;
-                }
-                lastClass = i + 2;
-            }
-        }
-    }
-
-    // TODO: add support for amap later
+    loadCMAP();
 
     m_version = getVersion();
-    Q_EMIT versionChanged(m_version);
 
-    // build property tree
-    {
-        for(Class &classObject : m_classes) {
-            const QList<VisualPart> visualParts = VisualPartsMap::find(classObject.className, m_version);
-
-            for(VisualPart visualPart : visualParts) {
-                Part part{visualPart.id, visualPart.name};
-
-                for(VisualState visualState : visualPart.states) {
-                    State state{visualState.value, visualState.name};
-                    part.states.append(state);
-                }
-
-                classObject.parts.append(part);
-            }
-        }
-    }
-
-    // load properties
-    {
-        wres::WinResource *varmapResource = &m_resourceTree->findResource("VARIANT", "NORMAL", "")->children().at(0);
-
-        if(!varmapResource)
-        {
-            qFatal() << "libqmsstyle<" + qApp->applicationName() + ">: VARIANT NORMAL does not exist.";
-
-            m_invalid = true;
-            Q_EMIT invalidChanged();
-
-            return false;
-        }
-
-        QByteArray varmap_data(varmapResource->offset(), varmapResource->size());
-
-        int cursor = 0;
-
-        // i love this
-        while(cursor < varmap_data.length() - 4)
-        {
-            Property prop = PropertyStream::readNextProperty(varmap_data, cursor);
-
-            // read image data, interpret as premultiplied and load into the property
-            if(prop.isImage())
-            {
-                wres::WinResource *imageFile = nullptr;
-
-                if(prop.name == "DISKSTREAM")
-                    imageFile = &m_resourceTree->findResource("STREAM", std::to_string(prop.value().toInt()), "")->children().at(0);
-                else
-                    imageFile = &m_resourceTree->findResource("IMAGE", std::to_string(prop.value().toInt()), "")->children().at(0);
-
-                if(imageFile) {
-                    QByteArray imageData(imageFile->offset(), imageFile->size());
-
-                    QImage image;
-                    image.loadFromData(imageData, "PNG");
-                    if(prop.name != "DISKSTREAM")
-                        image.reinterpretAsFormat(QImage::Format_ARGB32_Premultiplied);
-
-                    prop.imagefile.convertFromImage(image);
-                }
-            }
-
-            for(Class &classObject : m_classes) {
-                if(classObject.classID == prop.header.classID) {
-
-                    for(Part &partObject : classObject.parts) {
-                        if(partObject.id == prop.header.partID) {
-
-                            for(State &stateObject : partObject.states) {
-                                if(stateObject.id == prop.header.stateID) {
-                                    stateObject.properties.append(prop);
-                                    break;
-                                }
-                            }
-
-                        }
-                    }
-
-                }
-            }
-        }
-    }
+    loadBCMAP();
+    structurize();
 
     return true;
 }
 
-
-QByteArray Style::removeNull(const QByteArray &bytes, const int &start, const int &end)
+void Style::loadCMAP()
 {
-    QByteArray result;
+    wres::WinResource res = m_resourceTree->findResource("CMAP", "CMAP", "")->children().at(0);
+    QByteArray data = QByteArray(res.offset(), res.size());
 
-    for(int i = 0; i < bytes.length(); i++)
-    {
-        char byte = bytes[i];
-        if(byte == 0) continue;
-        result.push_back(byte);
+    int lastPos = 0;
+    for(int i = 0; i < data.length(); i += 2) {
+        if (data[i] == 0 && data[i + 1] == 0) {
+            // to avoid grabbing null bytes and trying to make a name out of that
+            if (i - lastPos > 2) {
+                QString cname = QString::fromLocal8Bit(data.sliced(lastPos, i - lastPos)).replace('\x00', "");
+                m_classes.append({(int)m_classes.length(), cname});
+            }
+            lastPos = i + 2;
+        }
+    }
+}
+
+void Style::loadBCMAP()
+{
+    wres::WinResource res = m_resourceTree->findResource("BCMAP", "BCMAP", "")->children().at(0);
+    QByteArray data = QByteArray(res.offset(), res.size());
+
+    quint32 supposedCount = qFromLittleEndian<quint32>(data.sliced(0, 4).constData());
+    int count = qMin((int)supposedCount, (data.length() - 4) / 4);
+    QList<int> parents;
+
+    for (int i = 4; i < data.length(); i += 4) {
+        // TODO: is it really just an array of uint8 padded to 4 bytes?
+        int index = (quint8)data.at(i);
+        if (index >= count) {
+            index = -1;
+        }
+        parents.append((int)index);
     }
 
-    return result;
+    for (int i = 0; i < count; ++i) {
+        Class styleClass = m_classes.at(i + 4);
+        if (i < parents.length()) {
+            int parent = parents.at(i);
+            if (parent > 0) {
+                styleClass.setBaseClass(&m_classes.at(parent + 4));
+            }
+        }
+    }
+}
+
+void Style::structurize()
+{
+    for (Class &styleClass : m_classes) {
+        auto visualParts = VisualPartsMap::find(styleClass.name(), m_version);
+
+        for (VisualPart &visualPart : visualParts) {
+            Part part(visualPart.id, visualPart.name);
+
+            for (VisualState &visualState : visualPart.states) {
+                State state(visualState.value, visualState.name);
+                part.addState(state);
+            }
+
+            styleClass.addPart(part);
+        }
+    }
 }
 
 Style::Version Style::getVersion()
@@ -231,45 +149,36 @@ Style::Version Style::getVersion()
     bool foundVistaQueryBuilder = false;
     bool foundTaskBand2Light_Taskband2 = false;
 
-    for(Class classObject : m_classes)
-    {
-        if(classObject.className == "DWMTouch")
-        {
+    for (Class &styleClass : m_classes) {
+        if (styleClass.name() == "DWMTouch") {
             foundDWMTouch = true;
-            continue;
-        }
-        else if(classObject.className == "DWMPen")
-        {
+
+        } else if (styleClass.name() == "DWMPen") {
             foundDWMPen = true;
-            continue;
-        }
-        else if(classObject.className == "W8::TaskbandExtendedUI")
-        {
+
+        } else if (styleClass.name() == "W8::TaskbandExtendedUI") {
             foundW8Taskband = true;
-            continue;
-        }
-        else if(classObject.className == "QueryBuilder")
-        {
+
+        } else if (styleClass.name() == "QueryBuilder") {
             foundVistaQueryBuilder = true;
-            continue;
-        }
-        else if(classObject.className == "DarkMode::TaskManager")
-        {
+
+        } else if (styleClass.name() == "DarkMode::TaskManager") {
             foundTaskBand2Light_Taskband2 = true;
-            continue;
+
         }
     }
 
-    if (foundTaskBand2Light_Taskband2)
+    if (foundTaskBand2Light_Taskband2) {
         return Version::Windows11;
-    else if (foundW8Taskband)
+    } else if (foundW8Taskband) {
         return Version::Windows8;
-    else if (foundDWMTouch || foundDWMPen)
+    } else if (foundDWMTouch || foundDWMPen) {
         return Version::Windows10;
-    else if (foundVistaQueryBuilder)
+    } else if (foundVistaQueryBuilder) {
         return Version::WindowsVista;
-    else
+    } else {
         return Version::Windows7;
+    }
 }
 
 }

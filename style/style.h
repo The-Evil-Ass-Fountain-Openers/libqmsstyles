@@ -19,15 +19,18 @@ class WinLibrary;
 
 namespace VisualStyle
 {
+Q_NAMESPACE
 
 class Style : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("Create the visual style through Qmsstyles::load() instead")
 
     Q_PROPERTY(bool invalid READ invalid NOTIFY invalidChanged)
 
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
-    Q_PROPERTY(QUrl path READ path NOTIFY pathChanged)
+    Q_PROPERTY(QString path READ path NOTIFY pathChanged)
     Q_PROPERTY(Version version READ version NOTIFY versionChanged)
 
     Q_PROPERTY(QList<Class> classes READ classes NOTIFY classAdded)
@@ -35,13 +38,13 @@ class Style : public QObject
 public:
     enum Version
     {
-        WindowsXP,
-        WindowsVista,
+        WindowsVista = 0,
         Windows7,
         Windows8,
         Windows10,
         Windows11
     };
+    Q_ENUM(Version)
 
     explicit Style(const QString &name, const QString &path, QObject *parent = nullptr);
     ~Style();
@@ -49,12 +52,10 @@ public:
     bool invalid();
 
     QString name();
-    QUrl path();
+    QString path();
     Version version();
 
     QList<Class> classes();
-
-    const Class *findClass(const QString &name) const;
 
     bool load();
 
@@ -64,19 +65,21 @@ Q_SIGNALS:
     void invalidChanged();
 
     void nameChanged(QString name);
-    void pathChanged(QUrl path);
+    void pathChanged(QString path);
     void versionChanged(VisualStyle::Style::Version version);
 
     void classAdded(Class *addedClass);
 
 private:
-    QByteArray removeNull(const QByteArray &bytes, const int &start, const int &end);
+    void loadCMAP();
+    void loadBCMAP();
+    void structurize();
     Version getVersion();
 
     bool m_invalid{false};
 
     QString m_name;
-    QUrl m_path;
+    QString m_path;
     Version m_version = Version::Windows7;
 
     QList<Class> m_classes;

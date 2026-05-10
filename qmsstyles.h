@@ -3,10 +3,15 @@
 
 #include "qmsstyles_global.h"
 
-#include "style/style.h"
-
 #include <QObject>
 #include <QSharedPointer>
+#include <QQmlEngine>
+#include <QUrl>
+
+namespace VisualStyle
+{
+class Style;
+}
 
 class QMSSTYLES_EXPORT Qmsstyles : public QObject
 {
@@ -17,9 +22,9 @@ class QMSSTYLES_EXPORT Qmsstyles : public QObject
 public:
     static Qmsstyles *self();
 
-    QSharedPointer<VisualStyle::Style> load(const QString &path);
-    void unload(const QString &path);
-    void unload(QSharedPointer<VisualStyle::Style> style);
+    Q_INVOKABLE QSharedPointer<VisualStyle::Style> load(const QString &path);
+    Q_INVOKABLE void unload(const QString &path);
+    Q_INVOKABLE void unload(QSharedPointer<VisualStyle::Style> style);
 
     QSharedPointer<VisualStyle::Style> get(const QString &name);
     QList<QSharedPointer<VisualStyle::Style>> styles();

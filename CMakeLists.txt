@@ -5,14 +5,13 @@ project(libqmsstyles LANGUAGES CXX)
 set(QT_MIN_VERSION "6.10.0")
 set(QT_MAJOR_VERSION 6)
 
-set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(LibWres REQUIRED)
-find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS Core Widgets)
+find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS Core Quick Widgets)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
@@ -23,20 +22,18 @@ add_library(qmsstyles SHARED
 
     style/style.h style/style.cpp
     style/class.h style/class.cpp
-    style/propertystream.h style/propertystream.cpp
-    style/property.h style/property.cpp
+    # style/propertystream.h style/propertystream.cpp
+    # style/property.h style/property.cpp
 
     style/definitions.h
     style/visualpartsmap.h style/visualstatesmap.h style/visualenumsmap.h
-
-    util.h util.cpp
-    logging.h logging.cpp
 )
 
 target_link_libraries(qmsstyles
     PRIVATE
         Qt${QT_MAJOR_VERSION}::Core
         Qt${QT_MAJOR_VERSION}::Widgets
+        Qt${QT_MAJOR_VERSION}::Quick
         wres
 )
 
@@ -95,4 +92,5 @@ add_definitions(-D_GNU_SOURCE=1)
 
 target_compile_definitions(qmsstyles PRIVATE QMSSTYLES_LIBRARY)
 
-add_subdirectory(testing)
+add_subdirectory(qml)
+add_subdirectory(tool)

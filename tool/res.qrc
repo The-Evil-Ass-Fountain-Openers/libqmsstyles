@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/">
+        <file>res/menubar.png</file>
+        <file>res/commandbar.png</file>
+        <file>res/header.png</file>
+        <file>res/statusbar.png</file>
+
+        <file>res/treearrow-normal.png</file>
+        <file>res/treearrow-hover.png</file>
+        <file>res/treearrow-expanded-normal.png</file>
+        <file>res/treearrow-expanded-hover.png</file>
+
+        <file>res/cmdbtn-hover.png</file>
+        <file>res/cmdbtn-pressed.png</file>
+    </qresource>
+</RCC>

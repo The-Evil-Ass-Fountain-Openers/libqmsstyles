@@ -1,5 +1,6 @@
 #include "qmsstyles.h"
-#include "logging.h"
+
+#include "style/style.h"
 
 #include <QApplication>
 
@@ -7,42 +8,47 @@
 #include <QProcess>
 #include <QFileInfo>
 
-
 static QHash<QString, QSharedPointer<VisualStyle::Style>> s_loadedStyles;
-
 
 Qmsstyles *Qmsstyles::self()
 {
     static Qmsstyles *s_instance = new Qmsstyles;
+    QJSEngine::setObjectOwnership(s_instance,
+                                  QJSEngine::CppOwnership);
     return s_instance;
 }
-
 
 QSharedPointer<VisualStyle::Style> Qmsstyles::load(const QString &path)
 {
     QSharedPointer<VisualStyle::Style> style = get(path);
 
     // this style object is already loaded
-    if(style) return style;
+    if (style) {
+        return style;
+    }
 
-    // empty (why)
-    if(path.isEmpty()) return nullptr;
+    // empty
+    if (path.isEmpty()) {
+        return nullptr;
+    }
 
     // does not exist
     QFileInfo info(path);
-    if(!info.exists()) return nullptr;
+    if (!info.exists()) {
+        return nullptr;
+    }
 
     // otherwise, attempt to load it
     style.reset(new VisualStyle::Style(info.baseName(), path, this));
 
-    if(!style->invalid()) {
+    if (!style->invalid()) {
         style->load();
         s_loadedStyles[path] = style;
         Q_EMIT styleLoaded(style);
         Q_EMIT styleListUpdated();
-
-        return style;
-    } else style.clear();
+    } else {
+        style.clear();
+    }
 
     // fail
     return style;
@@ -50,8 +56,9 @@ QSharedPointer<VisualStyle::Style> Qmsstyles::load(const QString &path)
 
 void Qmsstyles::unload(const QString &path)
 {
-    if(s_loadedStyles.contains(path))
+    if (s_loadedStyles.contains(path)) {
         unload(s_loadedStyles.value(path));
+    }
 }
 
 void Qmsstyles::unload(QSharedPointer<VisualStyle::Style> style)
@@ -63,7 +70,6 @@ void Qmsstyles::unload(QSharedPointer<VisualStyle::Style> style)
     style.clear();
 }
 
-
 QSharedPointer<VisualStyle::Style> Qmsstyles::get(const QString &path)
 {
     if(s_loadedStyles.contains(path)) {
@@ -74,14 +80,17 @@ QSharedPointer<VisualStyle::Style> Qmsstyles::get(const QString &path)
 }
 
 QList<QSharedPointer<VisualStyle::Style>> Qmsstyles::styles()
-{ return s_loadedStyles.values(); }
-
+{
+    return s_loadedStyles.values();
+}
 
 Qmsstyles::Qmsstyles()
     : QObject{nullptr}
-{  }
+{
+}
 
 Qmsstyles::~Qmsstyles()
-{  }
+{
+}
 
 #include "moc_qmsstyles.cpp"

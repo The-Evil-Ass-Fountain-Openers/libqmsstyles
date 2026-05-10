@@ -6,7 +6,7 @@
 
 libqmsstyles is a Qt C++ library tailor-made specifically for Windows Vista+ msstyles parsing (soon Windows XP). It is extremely unfinished and some stuff may not work as expected or function names might change in the near future.
 
-This library is being developed with Qt 6.10.2.
+This library has been tested in Qt 6.11.0.
 
 ## Credits
 
@@ -40,4 +40,4 @@ This library depends on [LibWres](https://github.com/The-Evil-Ass-Fountain-Opene
 - [ ] Convert the current testing app into an msstyles previewer (partly done)
 - [ ] Add better screenshots
 - [ ] Add Windows XP msstyles parsing support
-- [ ] Maybe QML support?
+- [X] Maybe QML support?

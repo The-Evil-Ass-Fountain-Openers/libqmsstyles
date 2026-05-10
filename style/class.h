@@ -1,58 +1,100 @@
 #ifndef CLASS_H
 #define CLASS_H
 
-#include "property.h"
+// #include "property.h"
 
 #include <QObject>
-
-#include <algorithm>
+#include <QtQml/qqmlregistration.h>
 
 namespace VisualStyle
 {
 
-struct State
+class Property {};
+
+class State
 {
-    int id;
-    QString name;
-    QList<Property> properties;
+    Q_GADGET
+    QML_VALUE_TYPE(state)
+    QML_UNCREATABLE("")
 
-    const Property *getProperty(const QString &name) const {
-        auto it = std::find_if(properties.constBegin(), properties.constEnd(), [&](const Property property){
-            return property.name == name;
-        });
+    Q_PROPERTY(QString name READ name)
+    Q_PROPERTY(int id READ id)
+    Q_PROPERTY(QList<Property> properties READ properties)
 
-        if(it != properties.constEnd()) return &(*it);
-        else return nullptr;
-    }
+public:
+    State() = default;
+    State(int id, QString name);
+
+    QString name() const;
+
+    int id() const;
+
+    QList<Property> properties() const;
+    void addProperty(Property property);
+
+private:
+    QString m_name;
+    int m_id;
+    QList<Property> m_properties;
 };
 
-struct Part
+class Part
 {
-    int id;
-    QString name;
-    QList<State> states;
+    Q_GADGET
+    QML_VALUE_TYPE(part)
+    QML_UNCREATABLE("")
 
-    const State *getState(const QString &name) const {
-        auto it = std::find_if(states.constBegin(), states.constEnd(), [&](const State state){
-            return state.name == name;
-        });
+    Q_PROPERTY(QString name READ name)
+    Q_PROPERTY(int id READ id)
+    Q_PROPERTY(QList<State> states READ states)
 
-        if(it != states.constEnd()) return &(*it);
-        else return nullptr;
-    }
+public:
+    Part() = default;
+    Part(int id, QString name);
+
+    QString name() const;
+
+    int id() const;
+
+    QList<State> states() const;
+    void addState(State state);
+
+private:
+    QString m_name;
+    int m_id;
+    QList<State> m_states;
 };
 
 class Class
 {
+    Q_GADGET
+    QML_VALUE_TYPE(class)
+    QML_UNCREATABLE("")
+
+    Q_PROPERTY(QString name READ name)
+    Q_PROPERTY(const Class *baseClass READ baseClass)
+    Q_PROPERTY(int id READ id)
+    Q_PROPERTY(QList<Part> parts READ parts)
+
 public:
+    Class() = default; // for qml compatibility
     Class(int id, QString name);
 
-    QString className;
-    int classID;
+    QString name() const;
 
-    QList<Part> parts;
+    const Class *baseClass() const;
+    void setBaseClass(const Class *baseClass);
 
-    const Part *findPart(const QString &name) const;
+    int id() const;
+
+    QList<Part> parts() const;
+    void addPart(Part part);
+
+private:
+    QString m_name;
+    const Class *m_baseClass;
+    int m_id;
+    QList<Part> m_parts;
 };
 
 }
