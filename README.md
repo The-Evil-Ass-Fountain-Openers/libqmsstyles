@@ -29,15 +29,8 @@ This library depends on [LibWres](https://github.com/The-Evil-Ass-Fountain-Opene
 
 ## TODO
 
-- [X] Add support for reading and storing msstyles classes
-- [X] Add support for getting the parts of an msstyles class
-- [X] Add support for getting the states of an msstyles class part
-- [ ] Make a singleton which will store every msstyles property for every class, part and state
-- [X] Finish properties reading
-- [ ] Add writing support
-- [X] Remove alpha premultiplication on IMAGEFILE properties loading
 - [ ] Add AMAP reading support (Windows 8+)
-- [ ] Convert the current testing app into an msstyles previewer (partly done)
+- [ ] Add editing support
+- [ ] Make an msstyles previewer (``tool/``)
 - [ ] Add better screenshots
 - [ ] Add Windows XP msstyles parsing support
-- [X] Maybe QML support?

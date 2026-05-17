@@ -3,75 +3,72 @@
 
 #include "definitions.h"
 
-#include <cstdint>
-#include <algorithm>
-
-#include <QPixmap>
+#include <QObject>
 #include <QVariant>
+#include <QPixmap>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 namespace VisualStyle
 {
 
-class PropertyHeader
+class Property : public QObject, public QVariant
 {
+    Q_OBJECT
+
 public:
-    PropertyHeader(qint32 name, qint32 type);
-    PropertyHeader(QByteArray data, int start);
-    PropertyHeader(const PropertyHeader &object);
+    explicit Property(IDENTIFIER name, IDENTIFIER type, QPixmap imageFile = QPixmap());
 
-    qint32 nameID;       // Offset: 0, Size: 4,	ID for the property name, described in MSDN
-    qint32 typeID;       // Offset: 4, Size: 4,	ID for the type of the property, described in MSDN
-    qint32 classID;      // Offset: 8, Size: 4,	Index to the class from CMAP the property belongs to
-    qint32 partID;       // Offset: 12, Size: 4	ID for the part of the class the property belongs to
-    qint32 stateID;      // Offset: 16, Size: 4	ID for the state map
-    qint32 shortFlag;    // Offset: 20, Size: 4	If not 0, ignore 'sizeInBytes' as no data follows. Instead this field may contain data.
-    qint32 reserved;     // Offset: 24, Size: 4	Seems to be always zero
-    qint32 sizeInBytes;  // Offset: 28, Size: 4	The size of the data that follows. Does not include padding
-
-    bool isValid();
-
-    bool operator==(const PropertyHeader &object)
-    {
-        return object.classID == classID &&
-               object.nameID == nameID &&
-               object.partID == partID &&
-               object.reserved == reserved &&
-               object.shortFlag == shortFlag &&
-               object.sizeInBytes == sizeInBytes &&
-               object.stateID == stateID &&
-               object.typeID == typeID;
-    }
-};
-
-class Property
-{
-public:
-    Property(IDENTIFIER nameID, IDENTIFIER typeID);
-    Property(const PropertyHeader &headerObject);
-
-    PropertyHeader header;
-    QString name;
-    QPixmap imagefile;
-
-    QVariant value() const { return m_value; }
-    template <typename T> T valueAs() const { return m_value.value<T>(); }
-    QString valueString() const;
-
-    void setValue(QVariant variant);
-    void setValue(QString string);
-    void setValue(QList<qint32> int32List);
-    void setValue(QList<QColor> colorList);
-    void setValue(int i);
-
-    bool isImage() const;
+    IDENTIFIER name() const;
+    IDENTIFIER type() const;
 
 private:
-    void setDefaultValues();
-    void setName();
+    IDENTIFIER m_name;
+    IDENTIFIER m_type;
+    QPixmap m_imageFile;
+};
 
-    QVariant m_value;
+class PropertiesHandler : public QObject
+{
+    Q_OBJECT
+
+public:
+    explicit PropertiesHandler(QObject *parent = nullptr)
+        : QObject(parent)
+        , m_fallback(nullptr)
+    {
+    }
+
+    Property *get(IDENTIFIER nameID)
+    {
+        auto it = std::find_if(m_properties.begin(), m_properties.end(), [&](Property *property) {
+            return property->name() == nameID;
+        });
+
+        if (it != m_properties.end()) {
+            return *it;
+        } else if (m_fallback) {
+            return m_fallback->get(nameID);
+        } else {
+            return nullptr;
+        }
+    }
+
+    void add(Property *property)
+    {
+        property->setParent(this);
+        m_properties.append(property);
+    }
+
+    void setFallback(PropertiesHandler *fallback)
+    {
+        m_fallback = fallback;
+    }
+
+private:
+    PropertiesHandler *m_fallback;
+    QList<Property *> m_properties;
 };
 
 }
 
-#endif // PROPERTY_H
+#endif

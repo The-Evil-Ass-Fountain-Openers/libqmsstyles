@@ -5,6 +5,8 @@ qt_add_qml_module(qmsstylestool
     RESOURCE_PREFIX /qt/qml
     QML_FILES
         Main.qml
+    SOURCES
+        styletreemodel.cpp styletreeitem.cpp
     RESOURCES
         res.qrc
 )

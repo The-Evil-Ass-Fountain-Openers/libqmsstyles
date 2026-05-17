@@ -12,5 +12,9 @@
 
         <file>res/cmdbtn-hover.png</file>
         <file>res/cmdbtn-pressed.png</file>
+
+        <file>res/item-hover.png</file>
+        <file>res/item-selected.png</file>
+        <file>res/item-selected-hover.png</file>
     </qresource>
 </RCC>

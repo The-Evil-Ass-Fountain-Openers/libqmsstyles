@@ -7,8 +7,11 @@ set(QT_MAJOR_VERSION 6)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_BUILD_TYPE Debug)
 
 find_package(LibWres REQUIRED)
 find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS Core Quick Widgets)
@@ -16,18 +19,31 @@ find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS Core Quick Widgets)
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
-add_library(qmsstyles SHARED
+set(qmsstyles_FILES
     qmsstyles_global.h
     qmsstyles.h qmsstyles.cpp
+)
 
+set(visualstyle_FILES
     style/style.h style/style.cpp
     style/class.h style/class.cpp
-    # style/propertystream.h style/propertystream.cpp
-    # style/property.h style/property.cpp
+    style/part.h style/part.cpp
+    style/state.h style/state.cpp
+    style/property.h style/property.cpp
 
     style/definitions.h
     style/visualpartsmap.h style/visualstatesmap.h style/visualenumsmap.h
 )
+
+add_library(qmsstyles SHARED
+    ${qmsstyles_FILES}
+    ${visualstyle_FILES}
+)
+
+add_definitions(-DHAVE_DIRENT_H=1)
+add_definitions(-D_GNU_SOURCE=1)
+
+target_compile_definitions(qmsstyles PRIVATE QMSSTYLES_LIBRARY)
 
 target_link_libraries(qmsstyles
     PRIVATE
@@ -46,14 +62,16 @@ install(
 )
 install(
     FILES
-        style/class.h
         style/style.h
-        style/visualpartsmap.h
-        style/visualstatesmap.h
+        style/class.h
+        style/part.h
+        style/state.h
         style/property.h
+
         style/definitions.h
         style/visualenumsmap.h
-        style/propertystream.h
+        style/visualstatesmap.h
+        style/visualpartsmap.h
     DESTINATION
         ${CMAKE_INSTALL_INCLUDEDIR}/qmsstyles/style/
 )
@@ -65,7 +83,6 @@ install(
     LIBRARY DESTINATION
         ${CMAKE_INSTALL_LIBDIR}
 )
-
 
 install(
     EXPORT
@@ -87,10 +104,4 @@ install(
         ${CMAKE_INSTALL_LIBDIR}/cmake/Qmsstyles
 )
 
-add_definitions(-DHAVE_DIRENT_H=1)
-add_definitions(-D_GNU_SOURCE=1)
-
-target_compile_definitions(qmsstyles PRIVATE QMSSTYLES_LIBRARY)
-
-add_subdirectory(qml)
-add_subdirectory(tool)
+# add_subdirectory(tool)

@@ -1,12 +1,13 @@
 #ifndef STYLE_H
 #define STYLE_H
 
+#include "definitions.h"
+
 #include <QObject>
 #include <QDir>
 #include <QUrl>
 #include <QHash>
-
-#include "class.h"
+#include <QtQml/qqmlregistration.h>
 
 // for some reason including wres library directly causes for the
 // C++ compiler to think QObject is part of wres, and causes a ton
@@ -21,11 +22,14 @@ namespace VisualStyle
 {
 Q_NAMESPACE
 
+class Class;
+class Part;
+class State;
+class Property;
+
 class Style : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("Create the visual style through Qmsstyles::load() instead")
 
     Q_PROPERTY(bool invalid READ invalid NOTIFY invalidChanged)
 
@@ -33,11 +37,10 @@ class Style : public QObject
     Q_PROPERTY(QString path READ path NOTIFY pathChanged)
     Q_PROPERTY(Version version READ version NOTIFY versionChanged)
 
-    Q_PROPERTY(QList<Class> classes READ classes NOTIFY classAdded)
+    Q_PROPERTY(QList<Class *> classes READ classes NOTIFY loaded)
 
 public:
-    enum Version
-    {
+    enum Version {
         WindowsVista = 0,
         Windows7,
         Windows8,
@@ -55,7 +58,14 @@ public:
     QString path();
     Version version();
 
-    QList<Class> classes();
+    QList<Class *> &classes();
+
+    int classNameToIdx(QString name);
+
+    Class *getClass(int classID);
+    Part *getPart(int classID, int partID);
+    State *getState(int classID, int partID, int stateID);
+    Property *getProperty(int classID, int partID, int stateID, IDENTIFIER nameID);
 
     bool load();
 
@@ -68,12 +78,13 @@ Q_SIGNALS:
     void pathChanged(QString path);
     void versionChanged(VisualStyle::Style::Version version);
 
-    void classAdded(Class *addedClass);
-
 private:
     void loadCMAP();
     void loadBCMAP();
     void structurize();
+    void readPropertyHeaders();
+    void interpretPropData(QByteArray data, quint32 unknown1, Property *property);
+
     Version getVersion();
 
     bool m_invalid{false};
@@ -82,7 +93,7 @@ private:
     QString m_path;
     Version m_version = Version::Windows7;
 
-    QList<Class> m_classes;
+    QList<Class *> m_classes;
 
     // pointer needed because of forward declaration
     wres::WinLibrary *m_resourceTree;
@@ -90,4 +101,4 @@ private:
 
 }
 
-#endif // STYLE_H
+#endif

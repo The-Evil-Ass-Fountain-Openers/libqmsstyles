@@ -7,22 +7,22 @@ import QtQuick.Dialogs
 
 import org.kde.kirigami as Kirigami
 
-import qmsstyles
-import qmsstyles.style as VisualStyle
-
+// TODO: split all this into different files God
 Window {
     id: root
-
-    property VisualStyle.Style currentStyle: null
 
     minimumWidth: 800
     minimumHeight: 400
     width: 1000
     height: 600
 
-    title: "Qmsstyles Tool - " + (currentStyle ? (currentStyle.path ?? "Unknown") : "No msstyles loaded")
+    title: "Qmsstyles Tool - " + (backend.currentStyle ? (backend.currentStylePath ?? "Unknown") : "No msstyles loaded")
 
     visible: true
+
+    QmsstylesBackend {
+        id: backend
+    }
 
     FileDialog {
         id: fileDialog
@@ -30,12 +30,12 @@ Window {
         nameFilters: [ "Windows Visual Style (*.msstyles)" ]
         acceptLabel: "Open"
         onAccepted: {
-            if (root.currentStyle) {
-                Qmsstyles.unload(root.currentStyle);
+            if (backend.currentStylePath != "") {
+                backend.unload(backend.currentStylePath);
             }
 
-            root.currentStyle = Qmsstyles.load(currentFile);
-            statusBar.showMessage("Loaded visual style: " + root.currentStyle.name);
+            backend.load(currentFile);
+            statusBar.showMessage("Loaded visual style: " + backend.currentStyleName);
         }
     }
 
@@ -217,60 +217,28 @@ Window {
                 Layout.preferredWidth: 300
                 Layout.fillHeight: true
 
-                Header { text: "Classes" }
+                Header { text: "Structure View" }
 
                 QQC2.ScrollView {
                     anchors.fill: parent
                     anchors.topMargin: 24
 
-                    contentWidth: structureColumn.implicitWidth
-                    contentHeight: structureColumn.implicitHeight
+                    contentWidth: treeView.contentWidth
+                    contentHeight: treeView.contentHeight
 
-                    Column {
-                        id: structureColumn
+                    TreeView {
+                        id: treeView
 
-                        Repeater {
-                            id: structureRepeater
+                        width: parent.width
 
-                            model: root.currentStyle?.classes.length ?? 0
-                            delegate: Item {
-                                id: delegate
-
-                                required property int index
-
-                                readonly property var adjacentClass: root.currentStyle.classes[index]
-
-                                property bool expanded: false
-
-                                width: row.implicitWidth
-                                height: 16
-
-                                Row {
-                                    id: row
-
-                                    anchors.fill: parent
-
-                                    Image {
-                                        source: "qrc:/res/treearrow" + (delegate.expanded ? "-expanded" : "") + (arrowMa.containsMouse ? "-hover" : "-normal") + ".png"
-
-                                        MouseArea {
-                                            id: arrowMa
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            onClicked: delegate.expanded = !delegate.expanded
-                                        }
-                                    }
-
-                                    Text {
-                                        id: label
-
-                                        leftPadding: 4
-                                        rightPadding: 4
-                                        text: delegate.adjacentClass.name
-                                        color: "black"
-                                    }
-                                }
-                            }
+                        clip: true
+                        interactive: false
+                        selectionModel: ItemSelectionModel {}
+                        model: backend.structureModel
+                        reuseItems: false
+                        delegate: QQC2.TreeViewDelegate {
+                            implicitWidth: treeView.width
+                            implicitHeight: 16
                         }
                     }
                 }
@@ -302,6 +270,21 @@ Window {
                 Layout.fillHeight: true
 
                 Header { text: "Properties View" }
+
+                QQC2.ScrollView {
+                    anchors.fill: parent
+                    anchors.topMargin: 24
+
+                    contentWidth: listView.contentWidth
+                    contentHeight: listView.contentHeight
+
+                    ListView {
+                        id: listView
+
+                        width: parent.width
+
+                    }
+                }
             }
         }
 
