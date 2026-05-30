@@ -23,14 +23,19 @@ This library depends on [LibWres](https://github.com/The-Evil-Ass-Fountain-Opene
 
 ![uniko pushbutton](screenshots/Uniko_PUSHBUTTON.png)
 
-![progressbar background](screenshots/Aero_DWMWindow.png)
+![aero dwmwindow](screenshots/Aero_DWMWindow.png)
 
 ## TODO
 
+- [ ] Order classes list alphabetically
 - [ ] Add AMAP reading support (Windows 8+)
 - [ ] Add editing support
+    
+    This leads to:
+    - [ ] Turn the msstyles previewer into an msstyles editor
 - [ ] Add [binary compatibility](https://community.kde.org/Policies/Binary_Compatibility_Issues_With_C%2B%2B)
 - [X] Make an msstyles previewer (``src/tool/``)
+- [ ] Add a general controls preview to the msstyles previewer (will depend on [Borealis](https://github.com/aeroshell-desktop/borealis) for this)
 - [X] Add better screenshots
 - [ ] Detect more Windows versions
 - [ ] Add Windows XP msstyles parsing support
