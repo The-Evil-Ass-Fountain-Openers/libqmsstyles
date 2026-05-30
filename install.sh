@@ -1,26 +1,27 @@
 #!/bin/bash
 
-BUILD_DST="build"
-USE_NINJA=
-BUILD_COMMAND="make"
-
-if [[ "$*" == *"--ninja"* ]]
-then
-    if [[ -z "$(command -v ninja)" ]]; then
-        echo "Attempted to build using Ninja, but Ninja was not found on the system. Falling back to GNU Make."
-    else
-        echo "Compiling using Ninja"
-        USE_NINJA="-G Ninja"
-        BUILD_COMMAND="ninja"
+SU_CMD=sudo
+if [[ -z "$(command -v $SU_CMD)" ]]; then
+    SU_CMD=doas
+    if [[ -z "$(command -v $SU_CMD)" ]]; then
+        echo "Neither sudo or doas were detected on the system."
+        exit
     fi
 fi
 
+BUILD_TOOL=""
+if [[ "$*" == *"--build-tool"* ]]
+then
+    BUILD_TOOL="-DBUILD_TOOL=ON"
+    echo "qmsstylestool building enabled."
+else
+    echo "qmsstylestool building disabled."
+fi
 
-rm -rf "$BUILD_DST"
-mkdir "$BUILD_DST"
-cd "$BUILD_DST"
-cmake -DCMAKE_INSTALL_PREFIX=/usr .. $USE_NINJA
-$BUILD_COMMAND
-sudo $BUILD_COMMAND install
+cmake -DCMAKE_INSTALL_PREFIX=/usr $BUILD_TOOL -B build . || exit 1
+cmake --build build || exit 1
+$SU_CMD cmake --install build || exit 1
+
+echo "LibQmsstyles installation script has finished."
 
 
