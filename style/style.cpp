@@ -165,6 +165,7 @@ void Style::loadCMAP()
     }
 }
 
+// TODO: actually use this info
 void Style::loadBCMAP()
 {
     wres::WinResource res = m_resourceTree->findResource("BCMAP", "BCMAP", "")->children().at(0);
@@ -272,10 +273,10 @@ void Style::readPropertyHeaders()
         interpretPropData(data.sliced(offset + s_propheaderSize, dataSize), unknown1, property);
         parentState->addProperty(property);
 
-        if (stateID == 0) {
+        if (stateID == 0 && partID != 0) {
             // Common Properties
             parentState->properties()->setFallback(getState(classID, 0, 0)->properties());
-        } else {
+        } else if (stateID != 0 && partID != 0) {
             // Common
             parentState->properties()->setFallback(getState(classID, partID, 0)->properties());
         }
@@ -305,12 +306,12 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
         QList<QColor> list;
 
         for (int i = 0; i < data.size(); i++) {
-            int red   = qFromLittleEndian<int>(data.sliced(i, 1).constData());
-            int green = qFromLittleEndian<int>(data.sliced(i + 1, 1).constData());
-            int blue  = qFromLittleEndian<int>(data.sliced(i + 2, 1).constData());
-            int alpha = qFromLittleEndian<int>(data.sliced(i + 3, 1).constData());
+            int r = qFromLittleEndian<int>(data.sliced(i, 1).constData());
+            int g = qFromLittleEndian<int>(data.sliced(i + 1, 1).constData());
+            int b = qFromLittleEndian<int>(data.sliced(i + 2, 1).constData());
+            int a = qFromLittleEndian<int>(data.sliced(i + 3, 1).constData());
 
-            list.append(QColor::fromRgb(red, green, blue, alpha));
+            list.append(QColor::fromRgb(r, g, b, a));
         }
 
         property->setValue(list);
@@ -329,9 +330,40 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
         break;
     }
 
-    case IDENTIFIER::FILENAME:
+    case IDENTIFIER::FILENAME: {
+        property->setValue(unknown1);
+
+        wres::WinResource imageRes = m_resourceTree->findResource("IMAGE", std::to_string(unknown1), "")->children().at(0);
+        QByteArray imageData(imageRes.offset(), imageRes.size());
+
+        QImage image;
+        image.loadFromData(imageData, "PNG");
+        if (image.isNull()) {
+            break;
+        }
+
+        image.reinterpretAsFormat(QImage::Format_ARGB32_Premultiplied);
+
+        property->setImageFile(QPixmap::fromImage(image));
+
+        break;
+    }
+
+    case IDENTIFIER::DISKSTREAM: {
+        property->setValue(unknown1);
+
+        wres::WinResource streamRes = m_resourceTree->findResource("STREAM", std::to_string(unknown1), "")->children().at(0);
+        QByteArray imageData(streamRes.offset(), streamRes.size());
+
+        QImage image;
+        image.loadFromData(imageData, "PNG");
+
+        property->setImageFile(QPixmap::fromImage(image));
+
+        break;
+    }
+
     case IDENTIFIER::FILENAME_LITE:
-    case IDENTIFIER::DISKSTREAM:
     case IDENTIFIER::FONT: {
         property->setValue(qFromLittleEndian<int>(unknown1));
         break;
@@ -360,12 +392,12 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
 
     case IDENTIFIER::COLOR: {
         if (unknown1 == 0x0) {
-            int red   = qFromLittleEndian<int>(data.sliced(0, 1).constData());
-            int green = qFromLittleEndian<int>(data.sliced(1, 1).constData());
-            int blue  = qFromLittleEndian<int>(data.sliced(2, 1).constData());
-            int alpha = qFromLittleEndian<int>(data.sliced(3, 1).constData());
+            int r = qFromLittleEndian<int>(data.sliced(0, 1).constData());
+            int g = qFromLittleEndian<int>(data.sliced(1, 1).constData());
+            int b = qFromLittleEndian<int>(data.sliced(2, 1).constData());
+            int a = qFromLittleEndian<int>(data.sliced(3, 1).constData());
 
-            property->setValue(QColor::fromRgb(red, green, blue, alpha));
+            property->setValue(QColor::fromRgb(r, g, b, a));
         } else {
             property->setValue(QColor());
         }

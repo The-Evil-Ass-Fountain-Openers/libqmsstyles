@@ -95,13 +95,17 @@ int StyleTreeModel::columnCount(const QModelIndex &parent) const
     return 1;
 }
 
-QList<VisualStyle::Class *> &StyleTreeModel::classArray()
+int StyleTreeModel::count() const
 {
-    return m_classArray;
+    return rowCount();
 }
 
 void StyleTreeModel::setClassArray(QList<VisualStyle::Class *> &classArray)
 {
+    beginRemoveRows({}, 0, m_rootItem->childCount() - 1);
+    m_rootItem->clearChildItems();
+    endRemoveRows();
+
     m_classArray = classArray;
     if (!m_classArray.isEmpty()) {
         instantiateItems();
@@ -110,12 +114,6 @@ void StyleTreeModel::setClassArray(QList<VisualStyle::Class *> &classArray)
 
 void StyleTreeModel::instantiateItems()
 {
-    if (m_rootItem->childCount() > 0) {
-        beginResetModel();
-        m_rootItem->clearChildItems();
-        endResetModel();
-    }
-
     beginInsertRows({}, 0, m_classArray.length() - 1);
     for (VisualStyle::Class *cls : m_classArray) {
         StyleTreeItem *classItem = new StyleTreeItem(cls->id(), cls->name(), m_rootItem->childCount(), m_rootItem.get());

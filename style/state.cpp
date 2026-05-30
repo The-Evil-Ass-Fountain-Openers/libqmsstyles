@@ -7,7 +7,7 @@ namespace VisualStyle
 
 State::State(int id, QString name)
     : QObject(nullptr)
-    , m_properties(std::make_unique<PropertiesHandler>(this))
+    , m_properties(new PropertiesHandler(this))
     , m_id(id)
     , m_name(name)
 {
@@ -23,9 +23,9 @@ int State::id() const
     return m_id;
 }
 
-PropertiesHandler *State::properties()
+QSharedPointer<PropertiesHandler> State::properties()
 {
-    return m_properties.get();
+    return m_properties;
 }
 
 void State::addProperty(Property *property)

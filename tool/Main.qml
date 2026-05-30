@@ -7,7 +7,7 @@ import QtQuick.Dialogs
 
 import org.kde.kirigami as Kirigami
 
-// TODO: split all this into different files God
+// TODO: split all this into different files good God
 Window {
     id: root
 
@@ -16,26 +16,37 @@ Window {
     width: 1000
     height: 600
 
-    title: "Qmsstyles Tool - " + (backend.currentStyle ? (backend.currentStylePath ?? "Unknown") : "No msstyles loaded")
+    title: "Qmsstyles Tool - " + (backend.loaded ? backend.currentStylePath : "No msstyles loaded")
 
     visible: true
 
     QmsstylesBackend {
         id: backend
+        imageFileItem: imageFileItem
+        currentElement: treeView.selectionModel.currentIndex
     }
 
     FileDialog {
-        id: fileDialog
+        id: openDialog
 
         nameFilters: [ "Windows Visual Style (*.msstyles)" ]
         acceptLabel: "Open"
         onAccepted: {
-            if (backend.currentStylePath != "") {
-                backend.unload(backend.currentStylePath);
-            }
-
-            backend.load(currentFile);
+            backend.load(selectedFile);
             statusBar.showMessage("Loaded visual style: " + backend.currentStyleName);
+        }
+    }
+
+    FileDialog {
+        id: extractDialog
+
+        fileMode: FileDialog.SaveFile
+        nameFilters: [ "Image files (*.png *.jpg *.jpeg)" ]
+        acceptLabel: "Extract"
+        defaultSuffix: ".png"
+        currentFile: imageFileItem.name
+        onAccepted: {
+            imageFileItem.extractTo(selectedFile);
         }
     }
 
@@ -131,25 +142,14 @@ Window {
                 CommandButton {
                     icon: "document-open"
                     text: "Open"
-                    onClicked: fileDialog.open();
+                    onClicked: openDialog.open();
                 }
 
                 CommandButton {
                     icon: "insert-image"
-                    text: "Extract IMAGEFILE"
-                    enabled: false
-                }
-
-                CommandButton {
-                    icon: "list-add"
-                    text: "Add class"
-                    enabled: false
-                }
-
-                CommandButton {
-                    icon: "list-remove"
-                    text: "Remove class"
-                    enabled: false
+                    text: "Extract image"
+                    enabled: imageFileItem.hasImageFile
+                    onClicked: extractDialog.open();
                 }
 
                 Item { Layout.fillWidth: true }
@@ -232,6 +232,7 @@ Window {
                         width: parent.width
 
                         clip: true
+                        alternatingRows: false
                         interactive: false
                         selectionModel: ItemSelectionModel {}
                         model: backend.structureModel
@@ -243,7 +244,6 @@ Window {
                     }
                 }
             }
-
             Separator {  }
 
             Item {
@@ -254,19 +254,48 @@ Window {
 
                 Header { text: "Preview" }
 
-                Rectangle {
+                Item {
                     anchors.fill: parent
                     anchors.topMargin: 24
-                    color: "black"
+
+                    Image {
+                        anchors.fill: parent
+
+                        source: "qrc:/res/transparentboxesthing.png"
+                        fillMode: Image.Tile
+                    }
+
+                    QQC2.ScrollView {
+                        id: imageScrollView
+
+                        anchors.fill: parent
+
+                        contentWidth: imageFileContainer.implicitWidth
+                        contentHeight: imageFileContainer.implicitHeight
+
+                        // must be inside a container to be able to center properly.
+                        // can't center imagefile without this for whatever reason i might not know :/
+                        Item {
+                            id: imageFileContainer
+
+                            implicitWidth: imageFileItem.implicitWidth > imageScrollView.width ? imageFileItem.implicitWidth : imageScrollView.width
+                            implicitHeight: imageFileItem.implicitHeight > imageScrollView.height ? imageFileItem.implicitHeight : imageScrollView.height
+
+                            // TODO: add stretching and slicing rect marking
+                            ImageFileItem {
+                                id: imageFileItem
+                                anchors.centerIn: parent
+                            }
+                        }
+                    }
                 }
             }
-
             Separator {  }
 
             Item {
                 id: propertiesContainer
 
-                Layout.preferredWidth: 200
+                Layout.preferredWidth: 250
                 Layout.fillHeight: true
 
                 Header { text: "Properties View" }
@@ -278,11 +307,34 @@ Window {
                     contentWidth: listView.contentWidth
                     contentHeight: listView.contentHeight
 
-                    ListView {
+                    TableView {
                         id: listView
 
                         width: parent.width
 
+                        model: backend.propertiesModel
+                        interactive: false
+                        clip: true
+                        reuseItems: false
+                        delegate: Item {
+                            id: delegateRoot
+
+                            required property var display
+
+                            implicitWidth: TableView.view.width / 2
+                            implicitHeight: 19
+
+                            clip: true
+
+                            Text {
+                                anchors.fill: parent
+                                leftPadding: 4
+                                rightPadding: 4
+                                text: delegateRoot.display
+                                verticalAlignment: Text.AlignVCenter
+                                elide: Text.ElideRight
+                            }
+                        }
                     }
                 }
             }
@@ -340,45 +392,22 @@ Window {
 
                 Text {
                     Layout.alignment: Qt.AlignVCenter
-                    text: (root.currentStyle?.classes.length ?? 0) + " classes"
+                    text: backend.structureModel.count + " classes"
                 }
-
                 SBSeparator {  }
-
                 Text {
                     id: statusText
                     Layout.alignment: Qt.AlignVCenter
                 }
-
                 SBSeparator {  }
 
                 Item { Layout.fillWidth: true }
 
                 SBSeparator {  }
-
                 Text {
                     id: versionText
                     Layout.alignment: Qt.AlignVCenter
-                    text: {
-                        if (!root.currentStyle) {
-                            return "Targetting: None";
-                        }
-
-                        switch (root.currentStyle.version) {
-                            case VisualStyle.Style.Version.WindowsVista:
-                                return "Targetting: Windows Vista";
-                            case VisualStyle.Style.Version.Windows7:
-                                return "Targetting: Windows 7";
-                            case VisualStyle.Style.Version.Windows8:
-                                return "Targetting: Windows 8/8.1";
-                            case VisualStyle.Style.Version.Windows10:
-                                return "Targetting: Windows 10";
-                            case VisualStyle.Style.Version.Windows11:
-                                return "Targetting: Windows 11";
-                            default:
-                                return "Targetting: Unknown";
-                        }
-                    }
+                    text: "Targetting: " + (backend.currentStyleVersion ?? "Unknown")
                 }
             }
         }

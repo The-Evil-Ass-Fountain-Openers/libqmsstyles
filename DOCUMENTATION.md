@@ -1,6 +1,7 @@
 # msstyles documentation
 
-Please send help.
+Most information here has been taken from [msstyleEditor's wiki](https://github.com/nptr/msstyleEditor/wiki/.msstyles-Format). 
+This is also unfinished.
 
 ## Resource information
 
@@ -70,15 +71,11 @@ TODO
 
 The visual style structure is as follows:
 
-- Base class (it can be the class name after the `::`)
+- Base class (TODO: look into how class inheritance works exactly)
 - Class (example: `Button`)
 	- Common Properties (parts inherit props from here)
 	- Part (example: `PUSHBUTTON`)
 		- Common (states inherit props from here) 
 		- State (example: `NORMAL`)
 			- Property
-
-The reason why base class (the class to inherit properties from) *can be* the class name after the `::` is because the author of the visual style can choose to simply override that *and* keep the same name by using `BCMAP`. 
-
-An example of this would be the `TrayNotifyVertOpenComposited::Button` within the official Windows 7 msstyles. This class' name tells you that it inherits from `Button`, yet this class actually overrides that with `TrayNotifyVertOpen::Button`. Just something important to note.
 

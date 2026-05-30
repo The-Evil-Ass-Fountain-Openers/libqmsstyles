@@ -1,24 +1,28 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(libqmsstyles LANGUAGES CXX)
+project(libqmsstyles VERSION 2.0.0 LANGUAGES CXX)
 
 set(QT_MIN_VERSION "6.10.0")
 set(QT_MAJOR_VERSION 6)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_BUILD_TYPE Debug)
 
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+include(FeatureSummary)
+
 find_package(LibWres REQUIRED)
 find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS Core Quick Widgets)
 
-include(CMakePackageConfigHelpers)
-include(GNUInstallDirs)
+feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)
 
+# TODO: separate this all into a src/ folder
 set(qmsstyles_FILES
     qmsstyles_global.h
     qmsstyles.h qmsstyles.cpp
@@ -39,6 +43,8 @@ add_library(qmsstyles SHARED
     ${qmsstyles_FILES}
     ${visualstyle_FILES}
 )
+
+set_target_properties(qmsstyles PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
 add_definitions(-DHAVE_DIRENT_H=1)
 add_definitions(-D_GNU_SOURCE=1)
@@ -104,4 +110,4 @@ install(
         ${CMAKE_INSTALL_LIBDIR}/cmake/Qmsstyles
 )
 
-# add_subdirectory(tool)
+add_subdirectory(tool)

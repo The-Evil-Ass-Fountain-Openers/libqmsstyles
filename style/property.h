@@ -6,7 +6,7 @@
 #include <QObject>
 #include <QVariant>
 #include <QPixmap>
-#include <QtQmlIntegration/qqmlintegration.h>
+#include <QSharedPointer>
 
 namespace VisualStyle
 {
@@ -16,10 +16,13 @@ class Property : public QObject, public QVariant
     Q_OBJECT
 
 public:
-    explicit Property(IDENTIFIER name, IDENTIFIER type, QPixmap imageFile = QPixmap());
+    explicit Property(IDENTIFIER name, IDENTIFIER type);
 
     IDENTIFIER name() const;
     IDENTIFIER type() const;
+
+    QPixmap imageFile() const;
+    void setImageFile(QPixmap imageFile);
 
 private:
     IDENTIFIER m_name;
@@ -38,7 +41,12 @@ public:
     {
     }
 
-    Property *get(IDENTIFIER nameID)
+    QList<Property *> internalList() const
+    {
+        return m_properties;
+    }
+
+    Property *get(IDENTIFIER nameID, bool fallback = true)
     {
         auto it = std::find_if(m_properties.begin(), m_properties.end(), [&](Property *property) {
             return property->name() == nameID;
@@ -46,7 +54,7 @@ public:
 
         if (it != m_properties.end()) {
             return *it;
-        } else if (m_fallback) {
+        } else if (m_fallback && fallback) {
             return m_fallback->get(nameID);
         } else {
             return nullptr;
@@ -59,13 +67,14 @@ public:
         m_properties.append(property);
     }
 
-    void setFallback(PropertiesHandler *fallback)
+    void setFallback(QSharedPointer<PropertiesHandler> fallback)
     {
+        Q_ASSERT(fallback.data() != this);
         m_fallback = fallback;
     }
 
 private:
-    PropertiesHandler *m_fallback;
+    QSharedPointer<PropertiesHandler> m_fallback;
     QList<Property *> m_properties;
 };
 

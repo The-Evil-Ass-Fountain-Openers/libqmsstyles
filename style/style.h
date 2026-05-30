@@ -7,7 +7,6 @@
 #include <QDir>
 #include <QUrl>
 #include <QHash>
-#include <QtQml/qqmlregistration.h>
 
 // for some reason including wres library directly causes for the
 // C++ compiler to think QObject is part of wres, and causes a ton

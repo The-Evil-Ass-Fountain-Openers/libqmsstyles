@@ -11,7 +11,7 @@ StyleTreeItem::StyleTreeItem(int id, QString name, int row, StyleTreeItem *paren
 
 StyleTreeItem::~StyleTreeItem()
 {
-    qDeleteAll(m_childItems);
+    clearChildItems();
 }
 
 int StyleTreeItem::id() const
@@ -52,5 +52,4 @@ void StyleTreeItem::addChildItem(StyleTreeItem *item)
 void StyleTreeItem::clearChildItems()
 {
     qDeleteAll(m_childItems);
-    m_childItems.clear();
 }

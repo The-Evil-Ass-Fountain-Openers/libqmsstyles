@@ -2,7 +2,6 @@
 #define CLASS_H
 
 #include <QObject>
-#include <QtQml/qqmlregistration.h>
 
 namespace VisualStyle
 {

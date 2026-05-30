@@ -4,7 +4,6 @@
 #include "styletreeitem.h"
 
 #include <QAbstractItemModel>
-#include <QtQml/qqmlregistration.h>
 #include <QObject>
 #include <QHash>
 #include <QByteArray>
@@ -17,12 +16,11 @@ class Class;
 class StyleTreeModel : public QAbstractItemModel
 {
     Q_OBJECT
-    QML_ELEMENT
 
-    Q_PROPERTY(QList<VisualStyle::Class *> classArray READ classArray WRITE setClassArray NOTIFY classArrayChanged)
+    Q_PROPERTY(int count READ count NOTIFY classArrayChanged)
 
 public:
-    StyleTreeModel(QObject *parent = nullptr);
+    explicit StyleTreeModel(QObject *parent = nullptr);
     ~StyleTreeModel();
 
     enum ItemRoles {
@@ -38,7 +36,8 @@ public:
     int rowCount(const QModelIndex &parent = {}) const override;
     int columnCount(const QModelIndex &parent = {}) const override;
 
-    QList<VisualStyle::Class *> &classArray();
+    int count() const; // QML
+
     void setClassArray(QList<VisualStyle::Class *> &classArray);
 
 Q_SIGNALS:

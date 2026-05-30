@@ -3,12 +3,11 @@
 namespace VisualStyle
 {
 
-Property::Property(IDENTIFIER name, IDENTIFIER type, QPixmap imageFile)
+Property::Property(IDENTIFIER name, IDENTIFIER type)
     : QObject(nullptr)
     , QVariant()
     , m_name(name)
     , m_type(type)
-    , m_imageFile(imageFile)
 {
 }
 
@@ -20,6 +19,16 @@ IDENTIFIER Property::name() const
 IDENTIFIER Property::type() const
 {
     return m_type;
+}
+
+QPixmap Property::imageFile() const
+{
+    return m_imageFile;
+}
+
+void Property::setImageFile(QPixmap imageFile)
+{
+    m_imageFile = imageFile;
 }
 
 }

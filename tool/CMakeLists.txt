@@ -6,7 +6,10 @@ qt_add_qml_module(qmsstylestool
     QML_FILES
         Main.qml
     SOURCES
+        qmsstylesbackend.cpp
         styletreemodel.cpp styletreeitem.cpp
+        propertiesmodel.cpp
+        imagefileitem.cpp
     RESOURCES
         res.qrc
 )
