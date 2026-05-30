@@ -6,31 +6,31 @@
 
 libqmsstyles is a Qt C++ library tailor-made specifically for Windows Vista+ msstyles parsing (soon Windows XP). It is extremely unfinished and some stuff may not work as expected or function names might change in the near future.
 
-This library has been tested in Qt 6.11.0.
+This library has been tested in Qt 6.11.
 
 ## Credits
 
-- [msstyleEditor](https://github.com/nptr/msstyleEditor/): original code that helped out **a lot** with Vista+ msstyles parsing
+- [msstyleEditor](https://github.com/nptr/msstyleEditor/): for the documentation, visual maps and definitions.
 
 ## Installation
 
 This library depends on [LibWres](https://github.com/The-Evil-Ass-Fountain-Openers/LibWres), so make sure to install it before installing LibQmsstyles.
 
 1. Clone this repository with ``git clone --depth=1 https://github.com/The-Evil-Ass-Fountain-Openers/libqmsstyles.git``, or by downloading the source code directly from the ``Code`` button.
-2. Within the repository folder, run ``sh install.sh`` in a terminal. You can also pass ``--ninja`` as an argument to compile with Ninja instead.
+2. Within the repository folder, run ``bash install.sh`` in a terminal. You can also pass ``--build-tool`` to build the msstyles tool.
 
 ## Screenshots
 
-![button](screenshots/button.png)
+![uniko pushbutton](screenshots/Uniko_PUSHBUTTON.png)
 
-![progressbar background](screenshots/progressbar-bg.png)
-
-![start menu](screenshots/startmenu.png)
+![progressbar background](screenshots/Aero_DWMWindow.png)
 
 ## TODO
 
 - [ ] Add AMAP reading support (Windows 8+)
 - [ ] Add editing support
-- [ ] Make an msstyles previewer (``tool/``)
-- [ ] Add better screenshots
+- [ ] Add [binary compatibility](https://community.kde.org/Policies/Binary_Compatibility_Issues_With_C%2B%2B)
+- [X] Make an msstyles previewer (``src/tool/``)
+- [X] Add better screenshots
+- [ ] Detect more Windows versions
 - [ ] Add Windows XP msstyles parsing support
