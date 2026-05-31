@@ -46,6 +46,12 @@ public:
         return m_properties;
     }
 
+    bool contains(IDENTIFIER nameID, bool fallback = true)
+    {
+        auto *prop = get(nameID, fallback);
+        return !!prop;
+    }
+
     Property *get(IDENTIFIER nameID, bool fallback = true)
     {
         auto it = std::find_if(m_properties.begin(), m_properties.end(), [&](Property *property) {

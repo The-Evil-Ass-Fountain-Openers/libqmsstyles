@@ -231,8 +231,16 @@ void Style::readPropertyHeaders()
         quint32 unknown2 = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 6, 4).constData());
         quint32 dataSize = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 7, 4).constData());
 
+        QByteArray propData{};
+        // the ones that aren't 0x0 don't have any data that follows
+        if (unknown1 == 0x0) {
+            propData = data.sliced(offset + s_propheaderSize, dataSize);
+        } else {
+            dataSize = 0;
+        }
+
         int propertySize = s_propheaderSize + dataSize;
-        int padding = qCeil((qreal)propertySize / 8.0) * 8 - propertySize;
+        int padding = qMin(4, qCeil((qreal)propertySize / 8.0) * 8 - propertySize);
         int nextOffset = offset + propertySize + padding;
 
         // check if it's valid
@@ -270,7 +278,7 @@ void Style::readPropertyHeaders()
         IDENTIFIER type = static_cast<IDENTIFIER>(typeID);
 
         Property *property = new Property(name, type);
-        interpretPropData(data.sliced(offset + s_propheaderSize, dataSize), unknown1, property);
+        interpretPropData(propData, unknown1, property);
         parentState->addProperty(property);
 
         if (stateID == 0 && partID != 0) {

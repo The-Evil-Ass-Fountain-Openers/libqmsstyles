@@ -24,7 +24,7 @@ QVariant StyleTreeModel::data(const QModelIndex &index, int role) const
     case IdRole:
         return item->id();
     case NameRole:
-        return item->name();
+        return QString::number(item->id()) + " - " + item->name();
     }
 
     return {};

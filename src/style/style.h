@@ -40,11 +40,12 @@ class Style : public QObject
 
 public:
     enum Version {
-        WindowsVista = 0,
+        WindowsXP = 0,
+        WindowsVista,
         Windows7,
         Windows8,
         Windows10,
-        Windows11
+        Windows11 = 255
     };
     Q_ENUM(Version)
 
