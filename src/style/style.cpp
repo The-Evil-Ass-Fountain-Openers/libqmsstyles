@@ -141,6 +141,7 @@ bool Style::load()
     loadBCMAP();
     structurize();
     readPropertyHeaders();
+    handlePropertiesInheritance();
 
     Q_EMIT loaded();
 
@@ -280,14 +281,6 @@ void Style::readPropertyHeaders()
         Property *property = new Property(name, type);
         interpretPropData(propData, unknown1, property);
         parentState->addProperty(property);
-
-        if (stateID == 0 && partID != 0) {
-            // Common Properties
-            parentState->properties()->setFallback(getState(classID, 0, 0)->properties());
-        } else if (stateID != 0 && partID != 0) {
-            // Common
-            parentState->properties()->setFallback(getState(classID, partID, 0)->properties());
-        }
 
         offset = nextOffset;
     }
@@ -461,6 +454,23 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
         break;
     }
 
+    }
+}
+
+void Style::handlePropertiesInheritance()
+{
+    for (VisualStyle::Class *cls : m_classes) {
+        for (VisualStyle::Part *part : cls->parts()) {
+            for (VisualStyle::State *state : part->states()) {
+                if (part->id() != 0 && state->id() == 0) {
+                    // Common Properties
+                    state->properties()->setFallback(getState(cls->id(), 0, 0)->properties());
+                } else if (part->id() != 0 && state->id() != 0) {
+                    // Common
+                    state->properties()->setFallback(getState(cls->id(), part->id(), 0)->properties());
+                }
+            }
+        }
     }
 }
 

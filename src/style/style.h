@@ -84,6 +84,7 @@ private:
     void structurize();
     void readPropertyHeaders();
     void interpretPropData(QByteArray data, quint32 unknown1, Property *property);
+    void handlePropertiesInheritance();
 
     Version getVersion();
 
