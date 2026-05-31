@@ -310,9 +310,8 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
             quint8 r = qFromLittleEndian<quint8>(data.sliced(i, 1).constData());
             quint8 g = qFromLittleEndian<quint8>(data.sliced(i + 1, 1).constData());
             quint8 b = qFromLittleEndian<quint8>(data.sliced(i + 2, 1).constData());
-            quint8 a = qFromLittleEndian<quint8>(data.sliced(i + 3, 1).constData());
 
-            list.append(QColor::fromRgb(r, g, b, a));
+            list.append(QColor::fromRgb(r, g, b));
         }
 
         property->setValue(list);
@@ -396,9 +395,8 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
             quint8 r = qFromLittleEndian<quint8>(data.sliced(0, 1).constData());
             quint8 g = qFromLittleEndian<quint8>(data.sliced(1, 1).constData());
             quint8 b = qFromLittleEndian<quint8>(data.sliced(2, 1).constData());
-            quint8 a = qFromLittleEndian<quint8>(data.sliced(3, 1).constData());
 
-            property->setValue(QColor::fromRgb(r, g, b, a));
+            property->setValue(QColor::fromRgb(r, g, b));
         } else {
             property->setValue(QColor());
         }
