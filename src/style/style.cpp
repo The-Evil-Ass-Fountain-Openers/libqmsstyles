@@ -299,11 +299,11 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
     {
 
     case IDENTIFIER::INTLIST: {
-        QList<int> list;
-        int count = qFromLittleEndian<int>(data.sliced(0, 4).constData());
+        QList<quint8> list;
+        quint8 count = qFromLittleEndian<quint8>(data.sliced(0, 4).constData());
 
         for (int i = 0; i < count; i++) {
-            list.append(qFromLittleEndian<int>(data.sliced(i * 4, 4).constData()));
+            list.append(qFromLittleEndian<quint32>(data.sliced(i * 4, 4).constData()));
         }
 
         property->setValue(list);
@@ -314,10 +314,10 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
         QList<QColor> list;
 
         for (int i = 0; i < data.size(); i++) {
-            int r = qFromLittleEndian<int>(data.sliced(i, 1).constData());
-            int g = qFromLittleEndian<int>(data.sliced(i + 1, 1).constData());
-            int b = qFromLittleEndian<int>(data.sliced(i + 2, 1).constData());
-            int a = qFromLittleEndian<int>(data.sliced(i + 3, 1).constData());
+            quint8 r = qFromLittleEndian<quint8>(data.sliced(i, 1).constData());
+            quint8 g = qFromLittleEndian<quint8>(data.sliced(i + 1, 1).constData());
+            quint8 b = qFromLittleEndian<quint8>(data.sliced(i + 2, 1).constData());
+            quint8 a = qFromLittleEndian<quint8>(data.sliced(i + 3, 1).constData());
 
             list.append(QColor::fromRgb(r, g, b, a));
         }
@@ -373,7 +373,7 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
 
     case IDENTIFIER::FILENAME_LITE:
     case IDENTIFIER::FONT: {
-        property->setValue(qFromLittleEndian<int>(unknown1));
+        property->setValue(qFromLittleEndian<quint8>(unknown1));
         break;
     }
 
@@ -382,7 +382,7 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
     case IDENTIFIER::ENUM:
     case IDENTIFIER::HIGHCONTRASTCOLORTYPE: {
         if (unknown1 == 0x0) {
-            property->setValue(qFromLittleEndian<int>(data.sliced(0, 4).constData()));
+            property->setValue(qFromLittleEndian<quint32>(data.sliced(0, 4).constData()));
         } else {
             property->setValue(0);
         }
@@ -400,10 +400,10 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
 
     case IDENTIFIER::COLOR: {
         if (unknown1 == 0x0) {
-            int r = qFromLittleEndian<int>(data.sliced(0, 1).constData());
-            int g = qFromLittleEndian<int>(data.sliced(1, 1).constData());
-            int b = qFromLittleEndian<int>(data.sliced(2, 1).constData());
-            int a = qFromLittleEndian<int>(data.sliced(3, 1).constData());
+            quint8 r = qFromLittleEndian<quint8>(data.sliced(0, 1).constData());
+            quint8 g = qFromLittleEndian<quint8>(data.sliced(1, 1).constData());
+            quint8 b = qFromLittleEndian<quint8>(data.sliced(2, 1).constData());
+            quint8 a = qFromLittleEndian<quint8>(data.sliced(3, 1).constData());
 
             property->setValue(QColor::fromRgb(r, g, b, a));
         } else {
@@ -414,8 +414,9 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
 
     case IDENTIFIER::POSITION: {
         if (unknown1 == 0x0) {
-            int x = qFromLittleEndian<int>(data.sliced(0, 4).constData());
-            int y = qFromLittleEndian<int>(data.sliced(4, 4).constData());
+            quint32 x = qFromLittleEndian<quint32>(data.sliced(0, 4).constData());
+            quint32 y = qFromLittleEndian<quint32>(data.sliced(4, 4).constData());
+
             property->setValue(QPoint(x, y));
         } else {
             property->setValue(QPoint());
@@ -425,10 +426,11 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
 
     case IDENTIFIER::RECTTYPE: {
         if (unknown1 == 0x0) {
-            int x = qFromLittleEndian<int>(data.sliced(0, 4).constData());
-            int y = qFromLittleEndian<int>(data.sliced(4, 4).constData());
-            int w = qFromLittleEndian<int>(data.sliced(8, 4).constData());
-            int h = qFromLittleEndian<int>(data.sliced(12, 4).constData());
+            quint32 x = qFromLittleEndian<quint32>(data.sliced(0, 4).constData());
+            quint32 y = qFromLittleEndian<quint32>(data.sliced(4, 4).constData());
+            quint32 w = qFromLittleEndian<quint32>(data.sliced(8, 4).constData());
+            quint32 h = qFromLittleEndian<quint32>(data.sliced(12, 4).constData());
+
             property->setValue(QRect(x, y, w, h));
         } else {
             property->setValue(QRect());
@@ -438,10 +440,11 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
 
     case IDENTIFIER::MARGINS: {
         if (unknown1 == 0x0) {
-            int l = qFromLittleEndian<int>(data.sliced(0, 4).constData());
-            int r = qFromLittleEndian<int>(data.sliced(4, 4).constData());
-            int t = qFromLittleEndian<int>(data.sliced(8, 4).constData());
-            int b = qFromLittleEndian<int>(data.sliced(12, 4).constData());
+            quint32 l = qFromLittleEndian<quint32>(data.sliced(0, 4).constData());
+            quint32 r = qFromLittleEndian<quint32>(data.sliced(4, 4).constData());
+            quint32 t = qFromLittleEndian<quint32>(data.sliced(8, 4).constData());
+            quint32 b = qFromLittleEndian<quint32>(data.sliced(12, 4).constData());
+
             property->setValue(QMargins(l, r, t, b));
         } else {
             property->setValue(QMargins());
