@@ -257,23 +257,29 @@ void Style::readPropertyHeaders()
             }
         }
 
+        Class *parentClass;
         if (classID >= m_classes.length()) {
-            offset = nextOffset;
-            continue;
+            m_classes.append(new Class((qint32)classID, "Unknown class"));
+            parentClass = m_classes.at(m_classes.length() - 1);
+        } else {
+            parentClass = m_classes.at(classID);
         }
-        Class *parentClass = m_classes.at(classID);
 
+        Part *parentPart;
         if (partID >= parentClass->parts().length()) {
-            offset = nextOffset;
-            continue;
+            parentClass->addPart(new Part((qint32)partID, "Unknown part"));
+            parentPart = parentClass->parts().at(parentClass->parts().length() - 1);
+        } else {
+            parentPart = parentClass->parts().at(partID);
         }
-        Part *parentPart = parentClass->parts().at(partID);
 
+        State *parentState;
         if (stateID >= parentPart->states().length()) {
-            offset = nextOffset;
-            continue;
+            parentPart->addState(new State((qint32)stateID, "Unknown state"));
+            parentState = parentPart->states().at(parentPart->states().length() - 1);
+        } else {
+            parentState = parentPart->states().at(stateID);
         }
-        State *parentState = parentPart->states().at(stateID);
 
         IDENTIFIER name = static_cast<IDENTIFIER>(nameID);
         IDENTIFIER type = static_cast<IDENTIFIER>(typeID);
@@ -458,8 +464,20 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
 void Style::handlePropertiesInheritance()
 {
     for (VisualStyle::Class *cls : m_classes) {
+        if (cls->name() == "Unknown class") {
+            continue;
+        }
+
         for (VisualStyle::Part *part : cls->parts()) {
+            if (part->name() == "Unknown part") {
+                continue;
+            }
+
             for (VisualStyle::State *state : part->states()) {
+                if (state->name() == "Unknown state") {
+                    continue;
+                }
+
                 if (part->id() != 0 && state->id() == 0) {
                     // Common Properties
                     state->properties()->setFallback(getState(cls->id(), 0, 0)->properties());
