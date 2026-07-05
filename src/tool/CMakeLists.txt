@@ -14,6 +14,8 @@ qt_add_qml_module(qmsstylestool
         res.qrc
 )
 
+configure_file(qmsstylestool.desktop.in ${CMAKE_CURRENT_BINARY_DIR}/qmsstylestool.desktop @ONLY)
+
 target_link_libraries(qmsstylestool
     PRIVATE
         Qt${QT_VERSION_MAJOR}::Quick
@@ -28,3 +30,6 @@ install(TARGETS qmsstylestool
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/qmsstylestool.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications/)
+

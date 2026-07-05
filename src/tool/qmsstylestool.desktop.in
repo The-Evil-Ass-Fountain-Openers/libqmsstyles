@@ -1,0 +1,8 @@
+[Desktop Entry]
+Exec=@CMAKE_INSTALL_PREFIX@/bin/qmsstylestool
+Name=Qmsstyles Tool
+Categories=Qt;TextEditor;
+Comment=View Windows Visual Styles properties and images
+Type=Application
+StartupNotify=true
+Icon=application-x-theme
