@@ -144,7 +144,19 @@ bool Style::load()
     handlePropertiesInheritance();
 
     Q_EMIT loaded();
+    return true;
+}
 
+bool Style::save()
+{
+    if (m_invalid) {
+        qWarning() << "attempting to save an invalid msstyles";
+        return false;
+    }
+
+    saveCMAP();
+
+    Q_EMIT saved();
     return true;
 }
 
@@ -442,7 +454,7 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
             quint32 t = qFromLittleEndian<quint32>(data.sliced(8, 4).constData());
             quint32 b = qFromLittleEndian<quint32>(data.sliced(12, 4).constData());
 
-            property->setValue(QMargins(l, r, t, b));
+            property->setValue(QMargins(l, t, r, b));
         } else {
             property->setValue(QMargins());
         }
@@ -488,6 +500,16 @@ void Style::handlePropertiesInheritance()
             }
         }
     }
+}
+
+void Style::saveCMAP()
+{
+    wres::WinResource res = m_resourceTree->findResource("CMAP", "CMAP", "")->children().at(0);
+    QFile file(m_path);
+}
+
+void Style::saveProperties()
+{
 }
 
 Style::Version Style::getVersion()

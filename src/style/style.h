@@ -49,6 +49,8 @@ public:
     };
     Q_ENUM(Version)
 
+    using Ptr = QSharedPointer<VisualStyle::Style>;
+
     explicit Style(const QString &name, const QString &path, QObject *parent = nullptr);
     ~Style();
 
@@ -68,9 +70,11 @@ public:
     Property *getProperty(int classID, int partID, int stateID, IDENTIFIER nameID);
 
     bool load();
+    bool save();
 
 Q_SIGNALS:
     void loaded();
+    void saved();
 
     void invalidChanged();
 
@@ -85,6 +89,9 @@ private:
     void readPropertyHeaders();
     void interpretPropData(QByteArray data, quint32 unknown1, Property *property);
     void handlePropertiesInheritance();
+
+    void saveCMAP();
+    void saveProperties();
 
     Version getVersion();
 
