@@ -36,6 +36,9 @@ void QmsstylesBackend::load(QString path)
 
         switch (m_currentStyle->version())
         {
+        case VisualStyle::Style::WindowsLonghorn:
+            m_currentStyleVersion = "Windows Longhorn";
+            break;
         case VisualStyle::Style::WindowsVista:
             m_currentStyleVersion = "Windows Vista";
             break;

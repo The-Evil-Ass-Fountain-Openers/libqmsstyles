@@ -138,6 +138,8 @@ bool Style::load()
 
     m_version = getVersion();
 
+    // m_resourceTree->printResourceTree();
+
     loadBCMAP();
     structurize();
     readPropertyHeaders();
@@ -185,7 +187,7 @@ void Style::loadBCMAP()
     QByteArray data = QByteArray(res.offset(), res.size());
 
     quint32 supposedCount = qFromLittleEndian<quint32>(data.sliced(0, 4).constData());
-    int count = qMin((int)supposedCount, (data.length() - 4) / 4);
+    int count = qMin(static_cast<int>(supposedCount), (data.length() - 4) / 4);
     QList<int> parents;
 
     for (int i = 4; i < data.length(); i += 4) {
@@ -210,6 +212,11 @@ void Style::loadBCMAP()
 
 void Style::structurize()
 {
+    // don't bother
+    if (m_version == Version::WindowsLonghorn) {
+        return;
+    }
+
     for (Class *cls : m_classes) {
         auto visualParts = VisualPartsMap::find(cls->name(), m_version);
 
@@ -228,7 +235,14 @@ void Style::structurize()
 void Style::readPropertyHeaders()
 {
     // TODO: read from other variants if available too
-    wres::WinResource res = m_resourceTree->findResource("VARIANT", "NORMAL", "")->children().at(0);
+    QString resourceName;
+    if (m_version == Version::WindowsLonghorn) {
+        resourceName = "NORMALDEFAULT";
+    } else {
+        resourceName = "NORMAL";
+    }
+
+    wres::WinResource res = m_resourceTree->findResource("VARIANT", resourceName.toStdString(), "")->children().at(0);
     QByteArray data = QByteArray(res.offset(), res.size());
 
     int offset = 0;
@@ -271,7 +285,7 @@ void Style::readPropertyHeaders()
 
         Class *parentClass;
         if (classID >= m_classes.length()) {
-            m_classes.append(new Class((qint32)classID, "Unknown class"));
+            m_classes.append(new Class((qint32)classID, "Class"));
             parentClass = m_classes.at(m_classes.length() - 1);
         } else {
             parentClass = m_classes.at(classID);
@@ -279,7 +293,7 @@ void Style::readPropertyHeaders()
 
         Part *parentPart;
         if (partID >= parentClass->parts().length()) {
-            parentClass->addPart(new Part((qint32)partID, "Unknown part"));
+            parentClass->addPart(new Part((qint32)partID, "Part"));
             parentPart = parentClass->parts().at(parentClass->parts().length() - 1);
         } else {
             parentPart = parentClass->parts().at(partID);
@@ -287,7 +301,7 @@ void Style::readPropertyHeaders()
 
         State *parentState;
         if (stateID >= parentPart->states().length()) {
-            parentPart->addState(new State((qint32)stateID, "Unknown state"));
+            parentPart->addState(new State((qint32)stateID, "State"));
             parentState = parentPart->states().at(parentPart->states().length() - 1);
         } else {
             parentState = parentPart->states().at(stateID);
@@ -351,16 +365,28 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
     case IDENTIFIER::FILENAME: {
         property->setValue(unknown1);
 
-        wres::WinResource imageRes = m_resourceTree->findResource("IMAGE", std::to_string(unknown1), "")->children().at(0);
-        QByteArray imageData(imageRes.offset(), imageRes.size());
+        QString groupName;
+        QString fileType;
+        if (m_version == Version::WindowsLonghorn) {
+            groupName = "2"; // Bitmap
+            fileType = "BMP";
+        } else {
+            groupName = "IMAGE";
+            fileType = "PNG";
+        }
+
+        wres::WinResource imageRes = m_resourceTree->findResource(groupName.toStdString(), std::to_string(unknown1), "")->children().at(0);
+        QByteArrayView imageData(imageRes.offset(), imageRes.size());
 
         QImage image;
-        image.loadFromData(imageData, "PNG");
+        image.loadFromData(imageData);
         if (image.isNull()) {
             break;
         }
 
-        image.reinterpretAsFormat(QImage::Format_ARGB32_Premultiplied);
+        if (m_version != Version::WindowsLonghorn) {
+            image.reinterpretAsFormat(QImage::Format_ARGB32_Premultiplied);
+        }
 
         property->setImageFile(QPixmap::fromImage(image));
 
@@ -371,10 +397,20 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
         property->setValue(unknown1);
 
         wres::WinResource streamRes = m_resourceTree->findResource("STREAM", std::to_string(unknown1), "")->children().at(0);
-        QByteArray imageData(streamRes.offset(), streamRes.size());
+        QByteArrayView imageData(streamRes.offset(), streamRes.size());
+
+        QString fileType;
+        if (m_version == Version::WindowsLonghorn) {
+            fileType = "BMP";
+        } else {
+            fileType = "PNG";
+        }
 
         QImage image;
-        image.loadFromData(imageData, "PNG");
+        image.loadFromData(imageData);
+        if (image.isNull()) {
+            break;
+        }
 
         property->setImageFile(QPixmap::fromImage(image));
 
@@ -476,17 +512,17 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
 void Style::handlePropertiesInheritance()
 {
     for (VisualStyle::Class *cls : m_classes) {
-        if (cls->name() == "Unknown class") {
+        if (cls->name() == "Class") {
             continue;
         }
 
         for (VisualStyle::Part *part : cls->parts()) {
-            if (part->name() == "Unknown part") {
+            if (part->name() == "Part") {
                 continue;
             }
 
             for (VisualStyle::State *state : part->states()) {
-                if (state->name() == "Unknown state") {
+                if (state->name() == "State") {
                     continue;
                 }
 
@@ -519,23 +555,21 @@ Style::Version Style::getVersion()
     bool foundW8Taskband = false;
     bool foundVistaQueryBuilder = false;
     bool foundTaskBand2Light_Taskband2 = false;
+    bool foundTravelFwd_AnimationButton = false;
 
     for (Class *cls : m_classes) {
         if (cls->name() == "DWMTouch") {
             foundDWMTouch = true;
-
         } else if (cls->name() == "DWMPen") {
             foundDWMPen = true;
-
         } else if (cls->name() == "W8::TaskbandExtendedUI") {
             foundW8Taskband = true;
-
         } else if (cls->name() == "QueryBuilder") {
             foundVistaQueryBuilder = true;
-
         } else if (cls->name() == "DarkMode::TaskManager") {
             foundTaskBand2Light_Taskband2 = true;
-
+        } else if (cls->name() == "TravelFwd::AnimationButton") {
+            foundTravelFwd_AnimationButton = true;
         }
     }
 
@@ -547,6 +581,8 @@ Style::Version Style::getVersion()
         return Version::Windows10;
     } else if (foundVistaQueryBuilder) {
         return Version::WindowsVista;
+    } else if (foundTravelFwd_AnimationButton) {
+        return Version::WindowsLonghorn;
     } else {
         return Version::Windows7;
     }

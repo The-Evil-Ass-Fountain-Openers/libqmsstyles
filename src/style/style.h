@@ -41,6 +41,7 @@ class Style : public QObject
 public:
     enum Version {
         WindowsXP = 0,
+        WindowsLonghorn,
         WindowsVista,
         Windows7,
         Windows8,
