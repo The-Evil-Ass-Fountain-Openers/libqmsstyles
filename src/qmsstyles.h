@@ -22,7 +22,7 @@ class QMSSTYLES_EXPORT Qmsstyles : public QObject
 public:
     static Qmsstyles *self();
 
-    Q_INVOKABLE QSharedPointer<VisualStyle::Style> load(const QString &path);
+    Q_INVOKABLE QSharedPointer<VisualStyle::Style> load(const QString &path, const bool fakeStructure = false);
     Q_INVOKABLE void unload(const QString &path);
     Q_INVOKABLE void unload(QSharedPointer<VisualStyle::Style> style);
 
@@ -36,7 +36,7 @@ Q_SIGNALS:
     void styleListUpdated();
 
 private:
-    explicit Qmsstyles();
+    Qmsstyles();
     ~Qmsstyles();
 };
 

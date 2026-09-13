@@ -23,10 +23,12 @@ namespace VisualStyle
 static const int s_propheaderSection = 4;
 static const int s_propheaderSize = s_propheaderSection * 8;
 
-Style::Style(const QString &name, const QString &path, QObject *parent)
-    : QObject{parent}
+Style::Style(const QString &name, const QString &path, const bool fakeStructure, QObject *parent)
+    : QObject(parent)
+    , m_invalid(false)
     , m_name(name)
     , m_path(path)
+    , m_fakeStructure(fakeStructure)
     , m_resourceTree(new wres::WinLibrary(path.toStdString()))
 {
     if (!(m_resourceTree->isLoaded() && m_resourceTree->isValid() && m_resourceTree->isPEBinary())) {
@@ -69,8 +71,11 @@ QList<Class *> &Style::classes()
 
 int Style::classNameToIdx(QString name)
 {
+    qDebug () << "searching class by name" << name;
     auto it = std::find_if(m_classes.begin(), m_classes.end(), [&](Class *cls) {
-        return cls->name() == name;
+        qDebug() << "class 1:" << cls->name();
+        qDebug() << "class 2:" << name;
+        return cls->name().compare(name, Qt::CaseInsensitive) == 0;
     });
 
     if (it != m_classes.end()) {
@@ -96,11 +101,7 @@ Part *Style::getPart(int classID, int partID)
         return nullptr;
     }
 
-    if (partID >= cls->parts().length()) {
-        return nullptr;
-    } else {
-        return cls->parts().at(partID);
-    }
+    return cls->getPart(partID);
 }
 
 State *Style::getState(int classID, int partID, int stateID)
@@ -110,11 +111,7 @@ State *Style::getState(int classID, int partID, int stateID)
         return nullptr;
     }
 
-    if (stateID >= part->states().length()) {
-        return nullptr;
-    } else {
-        return part->states().at(stateID);
-    }
+    return part->getState(stateID);
 }
 
 Property *Style::getProperty(int classID, int partID, int stateID, IDENTIFIER nameID)
@@ -141,7 +138,9 @@ bool Style::load()
     // m_resourceTree->printResourceTree();
 
     loadBCMAP();
-    structurize();
+    if (m_fakeStructure) {
+        structurize();
+    }
     readPropertyHeaders();
     handlePropertiesInheritance();
 
@@ -178,9 +177,23 @@ void Style::loadCMAP()
             lastPos = i + 2;
         }
     }
+
+    // handle regular inheritance
+    for (Class *cls : m_classes) {
+        QStringList classes = cls->name().split("::");
+        if (classes.length() > 1) {
+            QString baseClass = classes.at(1);
+            int idx = classNameToIdx(baseClass);
+            if (idx == -1) {
+                qCritical() << cls->name() << "attempting to inherit from non-existent class" << baseClass;
+                continue;
+            }
+
+            cls->setBaseClass(m_classes.at(idx));
+        }
+    }
 }
 
-// TODO: actually use this info
 void Style::loadBCMAP()
 {
     wres::WinResource res = m_resourceTree->findResource("BCMAP", "BCMAP", "")->children().at(0);
@@ -196,11 +209,15 @@ void Style::loadBCMAP()
         if (index >= count) {
             index = -1;
         }
-        parents.append((int)index);
+        parents.append(static_cast<int>(index));
     }
 
-    for (int i = 0; i < count; ++i) {
-        Class *cls = m_classes.at(i + 4);
+    for (int i = 1; i < count; i++) {
+        int idx = i + 4;
+        if (idx > count) {
+            idx = count - 1;
+        }
+        Class *cls = m_classes.at(idx);
         if (i < parents.length()) {
             int parent = parents.at(i);
             if (parent > 0) {
@@ -283,28 +300,26 @@ void Style::readPropertyHeaders()
             }
         }
 
-        Class *parentClass;
-        if (classID >= m_classes.length()) {
-            m_classes.append(new Class((qint32)classID, "Class"));
-            parentClass = m_classes.at(m_classes.length() - 1);
-        } else {
-            parentClass = m_classes.at(classID);
+        if (classID == 203) {
+            qDebug() << partID << stateID;
         }
 
-        Part *parentPart;
-        if (partID >= parentClass->parts().length()) {
-            parentClass->addPart(new Part((qint32)partID, "Part"));
-            parentPart = parentClass->parts().at(parentClass->parts().length() - 1);
-        } else {
-            parentPart = parentClass->parts().at(partID);
+        Class *parentClass = getClass((qint32)classID);
+        if (!parentClass) {
+            parentClass = new Class((qint32)classID, "Class");
+            m_classes.append(parentClass);
         }
 
-        State *parentState;
-        if (stateID >= parentPart->states().length()) {
-            parentPart->addState(new State((qint32)stateID, "State"));
-            parentState = parentPart->states().at(parentPart->states().length() - 1);
-        } else {
-            parentState = parentPart->states().at(stateID);
+        Part *parentPart = parentClass->getPart((qint32)partID, false);
+        if (!parentPart) {
+            parentPart = new Part((qint32)partID, "Part");
+            parentClass->addPart(parentPart);
+        }
+
+        State *parentState = parentPart->getState((qint32)stateID, false);
+        if (!parentState) {
+            parentState = new State((qint32)stateID, "State");
+            parentPart->addState(parentState);
         }
 
         IDENTIFIER name = static_cast<IDENTIFIER>(nameID);
@@ -512,26 +527,19 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
 void Style::handlePropertiesInheritance()
 {
     for (VisualStyle::Class *cls : m_classes) {
-        if (cls->name() == "Class") {
-            continue;
-        }
-
         for (VisualStyle::Part *part : cls->parts()) {
-            if (part->name() == "Part") {
-                continue;
-            }
-
             for (VisualStyle::State *state : part->states()) {
-                if (state->name() == "State") {
-                    continue;
-                }
-
+                State *fallbackState = nullptr;
                 if (part->id() != 0 && state->id() == 0) {
                     // Common Properties
-                    state->properties()->setFallback(getState(cls->id(), 0, 0)->properties());
+                    fallbackState = getState(cls->id(), 0, 0);
                 } else if (part->id() != 0 && state->id() != 0) {
                     // Common
-                    state->properties()->setFallback(getState(cls->id(), part->id(), 0)->properties());
+                    fallbackState = getState(cls->id(), part->id(), 0);
+                }
+
+                if (fallbackState) {
+                    state->properties()->setFallback(fallbackState->properties());
                 }
             }
         }
@@ -548,6 +556,7 @@ void Style::saveProperties()
 {
 }
 
+// TODO: revamp
 Style::Version Style::getVersion()
 {
     bool foundDWMTouch = false;

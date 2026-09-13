@@ -1,5 +1,5 @@
-#ifndef STATE_H
-#define STATE_H
+#ifndef QMSSTYLESSTATE_H
+#define QMSSTYLESSTATE_H
 
 #include <QObject>
 #include <QSharedPointer>
@@ -19,7 +19,7 @@ class State : public QObject
     Q_PROPERTY(QSharedPointer<PropertiesHandler> properties READ properties)
 
 public:
-    explicit State(int id, QString name);
+    State(int id, QString name);
 
     QString name() const;
     int id() const;

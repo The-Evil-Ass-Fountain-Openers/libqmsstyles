@@ -1,5 +1,5 @@
-#ifndef PROPERTY_H
-#define PROPERTY_H
+#ifndef QMSSTYLESPROPERTY_H
+#define QMSSTYLESPROPERTY_H
 
 #include "definitions.h"
 
@@ -16,7 +16,7 @@ class Property : public QObject, public QVariant
     Q_OBJECT
 
 public:
-    explicit Property(IDENTIFIER name, IDENTIFIER type);
+    Property(IDENTIFIER name, IDENTIFIER type);
 
     IDENTIFIER name() const;
     IDENTIFIER type() const;
@@ -35,7 +35,9 @@ class PropertiesHandler : public QObject
     Q_OBJECT
 
 public:
-    explicit PropertiesHandler(QObject *parent = nullptr)
+    using Ptr = QSharedPointer<PropertiesHandler>;
+
+    PropertiesHandler(QObject *parent = nullptr)
         : QObject(parent)
         , m_fallback(nullptr)
     {

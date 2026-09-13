@@ -30,7 +30,7 @@ void QmsstylesBackend::load(QString path)
     }
 
     m_currentStylePath = path;
-    m_currentStyle = Qmsstyles::self()->load(path);
+    m_currentStyle = Qmsstyles::self()->load(path, true);
     if (m_currentStyle) {
         m_currentStyleName = m_currentStyle->name();
 
@@ -55,7 +55,6 @@ void QmsstylesBackend::load(QString path)
             m_currentStyleVersion = "Windows 11";
             break;
         }
-
 
         m_structureModel->setClassArray(m_currentStyle->classes());
     }

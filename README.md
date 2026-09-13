@@ -4,7 +4,7 @@
 
 ## Introduction
 
-libqmsstyles is a Qt C++ library tailor-made specifically for Windows Vista+ msstyles parsing (soon Windows XP). It is extremely unfinished and some stuff may not work as expected or function names might change in the near future.
+libqmsstyles is a Qt C++ library tailor-made specifically for PackThem 4 (Vista+) msstyles parsing (in the future PackThem 3, aka Windows XP). It is unfinished and some stuff may not work as expected (crash or cause undefined behavior) and compatibility breaking changes may happen with every update.
 
 This library has been tested in Qt 6.11.
 
@@ -27,7 +27,7 @@ This library depends on [LibWres](https://github.com/The-Evil-Ass-Fountain-Opene
 
 ## TODO
 
-- [ ] Order classes list alphabetically
+- [ ] Add a search bar to the msstyles tool
 - [ ] Add AMAP reading support (Windows 8+)
 - [ ] Add editing support
     
@@ -35,7 +35,7 @@ This library depends on [LibWres](https://github.com/The-Evil-Ass-Fountain-Opene
     - [ ] Turn the msstyles previewer into an msstyles editor
 - [ ] Add [binary compatibility](https://community.kde.org/Policies/Binary_Compatibility_Issues_With_C%2B%2B)
 - [X] Make an msstyles previewer (``src/tool/``)
-- [ ] Add a general controls preview to the msstyles previewer (will depend on [Borealis](https://github.com/aeroshell-desktop/borealis) for this)
+- [ ] Add a general controls preview to the msstyles previewer (will probably depend on [Borealis](https://github.com/aeroshell-desktop/borealis) for this)
 - [X] Add better screenshots
 - [ ] Detect more Windows versions
-- [ ] Add Windows XP msstyles parsing support
+- [ ] Add PackThem 3 msstyles parsing support

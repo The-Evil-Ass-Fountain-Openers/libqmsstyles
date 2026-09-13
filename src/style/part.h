@@ -1,12 +1,15 @@
-#ifndef PART_H
-#define PART_H
+#ifndef QMSSTYLESPART_H
+#define QMSSTYLESPART_H
 
 #include <QObject>
+
+#include <QMap>
 
 namespace VisualStyle
 {
 
 class State;
+class Class;
 
 class Part : public QObject
 {
@@ -17,18 +20,25 @@ class Part : public QObject
     Q_PROPERTY(QList<State *> states READ states)
 
 public:
-    explicit Part(int id, QString name);
+    Part(int id, QString name);
 
     QString name() const;
     int id() const;
 
-    QList<State *> &states();
+    bool hasState(int stateID) const;
+    State *getState(int stateID, bool fallback = true) const;
+    // this generates a new list and is slower
+    QList<State *> states();
     void addState(State *state);
+
+    Class *parentClass() const;
+    void setParentClass(Class *parentClass);
 
 private:
     QString m_name;
     int m_id;
-    QList<State *> m_states;
+    QMap<int, State *> m_states;
+    Class *m_parentClass;
 };
 
 }

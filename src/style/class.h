@@ -1,7 +1,9 @@
-#ifndef CLASS_H
-#define CLASS_H
+#ifndef QMSSTYLESCLASS_H
+#define QMSSTYLESCLASS_H
 
 #include <QObject>
+
+#include <QMap>
 
 namespace VisualStyle
 {
@@ -18,7 +20,7 @@ class Class : public QObject
     Q_PROPERTY(QList<Part *> parts READ parts)
 
 public:
-    explicit Class(int id, QString name);
+    Class(int id, QString name);
 
     QString name() const;
     int id() const;
@@ -26,14 +28,17 @@ public:
     const Class *baseClass() const;
     void setBaseClass(const Class *baseClass);
 
-    QList<Part *> &parts();
+    bool hasPart(int partID) const;
+    Part *getPart(int partID, bool fallback = true) const;
+    // this generates a new list and is slower
+    QList<Part *> parts() const;
     void addPart(Part *part);
 
 private:
     QString m_name;
     const Class *m_baseClass;
     int m_id;
-    QList<Part *> m_parts;
+    QMap<int, Part *> m_parts;
 };
 
 }

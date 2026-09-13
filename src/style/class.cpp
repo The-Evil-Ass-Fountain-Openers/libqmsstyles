@@ -33,15 +33,31 @@ void Class::setBaseClass(const Class *baseClass)
     m_baseClass = baseClass;
 }
 
-QList<Part *> &Class::parts()
+bool Class::hasPart(int partID) const
 {
-    return m_parts;
+    return m_parts.contains(partID);
+}
+
+Part *Class::getPart(int partID, bool fallback) const
+{
+    if (!hasPart(partID) && fallback && m_baseClass) {
+        return m_baseClass->getPart(partID);
+    } else if (!hasPart(partID)) {
+        return nullptr;
+    }
+
+    return m_parts.value(partID);
+}
+
+QList<Part *> Class::parts() const
+{
+    return m_parts.values();
 }
 
 void Class::addPart(Part *part)
 {
-    part->setParent(this);
-    m_parts.append(part);
+    part->setParentClass(this);
+    m_parts[part->id()] = part;
 }
 
 }

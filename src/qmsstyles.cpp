@@ -8,7 +8,7 @@
 #include <QProcess>
 #include <QFileInfo>
 
-static QHash<QString, QSharedPointer<VisualStyle::Style>> s_loadedStyles;
+static QHash<QString, VisualStyle::Style::Ptr> s_loadedStyles;
 
 Qmsstyles *Qmsstyles::self()
 {
@@ -18,11 +18,11 @@ Qmsstyles *Qmsstyles::self()
     return s_instance;
 }
 
-QSharedPointer<VisualStyle::Style> Qmsstyles::load(const QString &path)
+QSharedPointer<VisualStyle::Style> Qmsstyles::load(const QString &path, const bool fakeStructure)
 {
-    QSharedPointer<VisualStyle::Style> style = get(path);
+    VisualStyle::Style::Ptr style = get(path);
 
-    // this style object is already loaded
+    // this style is already loaded
     if (style) {
         return style;
     }
@@ -39,8 +39,9 @@ QSharedPointer<VisualStyle::Style> Qmsstyles::load(const QString &path)
     }
 
     // otherwise, attempt to load it
-    style.reset(new VisualStyle::Style(info.baseName(), path, this));
+    style.reset(new VisualStyle::Style(info.baseName(), path, fakeStructure, this));
 
+    // TODO: maybe return in what it failed also
     if (!style->invalid()) {
         style->load();
         s_loadedStyles[path] = style;
@@ -50,7 +51,6 @@ QSharedPointer<VisualStyle::Style> Qmsstyles::load(const QString &path)
         style.clear();
     }
 
-    // fail
     return style;
 }
 
@@ -85,7 +85,7 @@ QList<QSharedPointer<VisualStyle::Style>> Qmsstyles::styles()
 }
 
 Qmsstyles::Qmsstyles()
-    : QObject{nullptr}
+    : QObject(nullptr)
 {
 }
 

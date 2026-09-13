@@ -1,5 +1,5 @@
-#ifndef STYLE_H
-#define STYLE_H
+#ifndef QMSSTYLESSTYLE_H
+#define QMSSTYLESSTYLE_H
 
 #include "definitions.h"
 
@@ -52,7 +52,7 @@ public:
 
     using Ptr = QSharedPointer<VisualStyle::Style>;
 
-    explicit Style(const QString &name, const QString &path, QObject *parent = nullptr);
+    Style(const QString &name, const QString &path, const bool fakeStructure, QObject *parent = nullptr);
     ~Style();
 
     bool invalid();
@@ -96,12 +96,13 @@ private:
 
     Version getVersion();
 
-    bool m_invalid{false};
+    bool m_invalid;
 
     QString m_name;
     QString m_path;
     Version m_version = Version::Windows7;
 
+    bool m_fakeStructure;
     QList<Class *> m_classes;
 
     // pointer needed because of forward declaration
