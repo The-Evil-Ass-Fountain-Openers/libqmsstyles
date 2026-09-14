@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(libqmsstyles VERSION 2.1.0 LANGUAGES CXX)
+project(libqmsstyles VERSION 2.1.1 LANGUAGES CXX)
 
 set(QT_MIN_VERSION "6.10.0")
 set(QT_MAJOR_VERSION 6)

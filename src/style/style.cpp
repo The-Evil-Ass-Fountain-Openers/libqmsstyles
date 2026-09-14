@@ -11,11 +11,13 @@
 #include <QByteArrayView>
 #include <QApplication>
 #include <QRegularExpression>
-
 #include <QtEndian>
 #include <QtLogging>
+#include <QLoggingCategory>
 
 #include <wres/winlibrary.h>
+
+Q_LOGGING_CATEGORY(QMSSTYLES_VISUALSTYLE_STYLE, "qmsstyles.visualstyle.style")
 
 namespace VisualStyle
 {
@@ -32,7 +34,7 @@ Style::Style(const QString &name, const QString &path, const bool fakeStructure,
     , m_resourceTree(new wres::WinLibrary(path.toStdString()))
 {
     if (!(m_resourceTree->isLoaded() && m_resourceTree->isValid() && m_resourceTree->isPEBinary())) {
-        qFatal() << "failed to parse msstyles";
+        qCCritical(QMSSTYLES_VISUALSTYLE_STYLE) << "Failed to load PE binary structure";
         m_invalid = true;
         Q_EMIT invalidChanged();
         return;
@@ -71,10 +73,7 @@ QList<Class *> &Style::classes()
 
 int Style::classNameToIdx(QString name)
 {
-    qDebug () << "searching class by name" << name;
     auto it = std::find_if(m_classes.begin(), m_classes.end(), [&](Class *cls) {
-        qDebug() << "class 1:" << cls->name();
-        qDebug() << "class 2:" << name;
         return cls->name().compare(name, Qt::CaseInsensitive) == 0;
     });
 
@@ -127,7 +126,7 @@ Property *Style::getProperty(int classID, int partID, int stateID, IDENTIFIER na
 bool Style::load()
 {    
     if (m_invalid) {
-        qWarning() << "invalid msstyles";
+        qCWarning(QMSSTYLES_VISUALSTYLE_STYLE) << "Trying to load an invalid msstyles";
         return false;
     }
 
@@ -151,7 +150,7 @@ bool Style::load()
 bool Style::save()
 {
     if (m_invalid) {
-        qWarning() << "attempting to save an invalid msstyles";
+        qCWarning(QMSSTYLES_VISUALSTYLE_STYLE) << "Attempting to save an invalid msstyles";
         return false;
     }
 
@@ -185,7 +184,7 @@ void Style::loadCMAP()
             QString baseClass = classes.at(1);
             int idx = classNameToIdx(baseClass);
             if (idx == -1) {
-                qCritical() << cls->name() << "attempting to inherit from non-existent class" << baseClass;
+                qCCritical(QMSSTYLES_VISUALSTYLE_STYLE) << cls->name() << "attempting to inherit from non-existent class" << baseClass;
                 continue;
             }
 
@@ -298,10 +297,6 @@ void Style::readPropertyHeaders()
                 offset = nextOffset;
                 continue;
             }
-        }
-
-        if (classID == 203) {
-            qDebug() << partID << stateID;
         }
 
         Class *parentClass = getClass((qint32)classID);

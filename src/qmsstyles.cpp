@@ -7,6 +7,9 @@
 #include <QDir>
 #include <QProcess>
 #include <QFileInfo>
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(QMSSTYLES, "qmsstyles")
 
 static QHash<QString, VisualStyle::Style::Ptr> s_loadedStyles;
 
@@ -29,12 +32,14 @@ QSharedPointer<VisualStyle::Style> Qmsstyles::load(const QString &path, const bo
 
     // empty
     if (path.isEmpty()) {
+        qCWarning(QMSSTYLES) << "Attempting to load an empty path";
         return nullptr;
     }
 
     // does not exist
     QFileInfo info(path);
     if (!info.exists()) {
+        qCWarning(QMSSTYLES) << "Attempting to load a non-existent style";
         return nullptr;
     }
 
