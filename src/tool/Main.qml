@@ -266,13 +266,6 @@ Window {
                     anchors.fill: parent
                     anchors.topMargin: 24
 
-                    Image {
-                        anchors.fill: parent
-
-                        source: "qrc:/res/transparentboxesthing.png"
-                        fillMode: Image.Tile
-                    }
-
                     QQC2.ScrollView {
                         id: imageScrollView
 
@@ -283,11 +276,19 @@ Window {
 
                         // must be inside a container to be able to center properly.
                         // can't center imagefile without this for whatever reason i might not know :/
+                        // TODO: make this container the imagefile item itself
                         Item {
                             id: imageFileContainer
 
                             implicitWidth: imageFileItem.implicitWidth > imageScrollView.width ? imageFileItem.implicitWidth : imageScrollView.width
                             implicitHeight: imageFileItem.implicitHeight > imageScrollView.height ? imageFileItem.implicitHeight : imageScrollView.height
+
+                            Image {
+                                anchors.fill: parent
+
+                                source: "qrc:/res/transparentboxesthing.png"
+                                fillMode: Image.Tile
+                            }
 
                             // TODO: add stretching and slicing rect marking
                             ImageFileItem {

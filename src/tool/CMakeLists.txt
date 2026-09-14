@@ -1,4 +1,4 @@
-project(qmsstylestool VERSION 1.0.1 LANGUAGES CXX)
+project(qmsstylestool VERSION 1.0.2 LANGUAGES CXX)
 
 qt_add_executable(qmsstylestool main.cpp)
 
