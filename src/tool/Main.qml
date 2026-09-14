@@ -41,9 +41,9 @@ Window {
         id: extractDialog
 
         fileMode: FileDialog.SaveFile
-        nameFilters: [ "Image files (*.png *.jpg *.jpeg)" ]
+        nameFilters: [ "Image files (*.png *.jpg *.jpeg *.bmp)" ]
         acceptLabel: "Extract"
-        defaultSuffix: ".png"
+        defaultSuffix: backend.currentStyleVersion < 2 ? ".bmp" : ".png"
         currentFile: imageFileItem.name
         onAccepted: {
             imageFileItem.extractTo(selectedFile);
@@ -297,8 +297,6 @@ Window {
                         }
                     }
                 }
-
-                Separator { anchors.right: parent.right }
             }
 
             Item {
@@ -312,40 +310,74 @@ Window {
                 QQC2.ScrollView {
                     anchors.fill: parent
                     anchors.topMargin: 24
+                    anchors.leftMargin: 2
 
-                    contentWidth: listView.contentWidth
-                    contentHeight: listView.contentHeight
+                    contentWidth: tableView.contentWidth
+                    contentHeight: tableView.contentHeight
 
                     TableView {
-                        id: listView
+                        id: tableView
 
-                        width: parent.width
+                        contentWidth: propertiesContainer.width - 2
 
                         model: backend.propertiesModel
                         interactive: false
                         clip: true
                         reuseItems: false
-                        delegate: Item {
+                        selectionMode: TableView.SingleSelection
+                        editTriggers: TableView.DoubleTapped
+                        delegateModelAccess: DelegateModel.ReadWrite
+                        columnSpacing: 1
+                        delegate: QQC2.ItemDelegate {
                             id: delegateRoot
 
-                            required property var display
+                            required property var model
+                            required property var row
+                            required property var column
 
-                            implicitWidth: TableView.view.width / 2
-                            implicitHeight: 19
+                            implicitWidth: (TableView.view.width / 2) - 1
 
-                            clip: true
+                            // the KDE desktop QQC2 sets some nasty defaults
+                            leftPadding: 0
+                            rightPadding: 0
+                            topPadding: 0
+                            bottomPadding: 0
 
-                            Text {
-                                anchors.fill: parent
-                                leftPadding: 4
-                                rightPadding: 4
-                                text: delegateRoot.display
-                                verticalAlignment: Text.AlignVCenter
+                            leftInset: 0
+                            rightInset: 0
+                            topInset: 0
+                            bottomInset: 0
+
+                            contentItem: Text {
+                                leftPadding: 2
+                                rightPadding: 2
+                                topPadding: 1
+                                bottomPadding: 1
+
+                                text: delegateRoot.model.display
                                 elide: Text.ElideRight
+
+                                TableView.editDelegate: QQC2.TextField {
+                                    x: delegateRoot.x
+                                    y: delegateRoot.y
+                                    width: delegateRoot.width
+                                    height: delegateRoot.height
+
+                                    leftPadding: 7
+                                    rightPadding: 0
+                                    topPadding: 3
+                                    bottomPadding: 0
+
+                                    text: delegateRoot.model.display
+
+                                    TableView.onCommit: display = text;
+                                }
                             }
                         }
                     }
                 }
+
+                Separator { anchors.left: parent.left }
             }
         }
 

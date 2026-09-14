@@ -67,6 +67,12 @@ int PropertiesModel::columnCount(const QModelIndex &parent) const
     return 2;
 }
 
+Qt::ItemFlags PropertiesModel::flags(const QModelIndex &index) const
+{
+    Q_UNUSED(index)
+    return Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable;
+}
+
 void PropertiesModel::setState(VisualStyle::State *state)
 {
     if (state) {
