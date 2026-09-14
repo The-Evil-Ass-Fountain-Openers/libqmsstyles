@@ -160,8 +160,10 @@ Window {
             id: mainContents
 
             component Separator: Item {
-                Layout.minimumWidth: 2
-                Layout.fillHeight: true
+                property Item resizeTarget: parent
+
+                implicitWidth: 2
+                implicitHeight: parent.height
 
                 Rectangle {
                     width: 1
@@ -174,6 +176,11 @@ Window {
                     width: 1
                     height: parent.height
                     color: "white"
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.SizeHorCursor
                 }
             }
 
@@ -243,8 +250,9 @@ Window {
                         }
                     }
                 }
+
+                Separator { anchors.right: parent.right }
             }
-            Separator {  }
 
             Item {
                 id: previewContainer
@@ -289,8 +297,9 @@ Window {
                         }
                     }
                 }
+
+                Separator { anchors.right: parent.right }
             }
-            Separator {  }
 
             Item {
                 id: propertiesContainer

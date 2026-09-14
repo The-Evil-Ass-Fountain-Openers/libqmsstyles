@@ -22,10 +22,27 @@ QVariant PropertiesModel::data(const QModelIndex &index, int role) const
     if (role == Qt::DisplayRole) {
         switch (index.column())
         {
-            case 0:
-                return VisualStyle::NAMES.key((int)property->name());
-            case 1:
-                return static_cast<QVariant>(*property);
+
+        case 0:
+            return VisualStyle::NAMES.key((int)property->name());
+        case 1: {
+            if (property->canConvert<QString>()) {
+                QString string = property->value<QString>();
+                return string;
+            } else if (property->canConvert<QMargins>()) {
+                QMargins margins = property->value<QMargins>();
+                return QString("%1, %2, %3, %4").arg(QString::number(margins.left()), QString::number(margins.right()),
+                                                     QString::number(margins.top()), QString::number(margins.bottom()));
+            } else if (property->canConvert<QPoint>()) {
+                QPoint position = property->value<QPoint>();
+                return QString("%1, %2").arg(QString::number(position.x()), QString::number(position.y()));
+            } else if (property->canConvert<QRect>()) {
+                QRect rect = property->value<QRect>();
+                return QString("(%1, %2) (%3x%4)").arg(QString::number(rect.x()), QString::number(rect.y()),
+                                                       QString::number(rect.width()), QString::number(rect.height()));
+            }
+        }
+
         }
     }
 
