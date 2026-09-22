@@ -134,6 +134,8 @@ bool Style::load()
 
     m_version = getVersion();
 
+    m_resourceTree->printResourceTree();
+
     loadBCMAP();
     if (m_fakeStructure) {
         structurize();
@@ -251,6 +253,79 @@ void Style::structurize()
 // TODO: optimize this somehow
 void Style::readPropertyHeaders()
 {
+    auto readProperties = [&](QString type, QString name) {
+        wres::WinResource res = m_resourceTree->findResource(type.toStdString(), name.toStdString(), "")->children().at(0);;
+        QByteArray data(res.offset(), res.size());
+
+        int offset = 0;
+        while (offset < data.size()) {
+            // see DOCUMENTATION.md for more info
+            quint32 nameID     = qFromLittleEndian<quint32>(data.sliced(offset, 4).constData());
+            quint32 typeID     = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection, 4).constData());
+            quint32 classID    = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 2, 4).constData());
+            quint32 partID     = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 3, 4).constData());
+            quint32 stateID    = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 4, 4).constData());
+            quint32 resourceId = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 5, 4).constData());
+            quint32 reserved   = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 6, 4).constData());
+            quint32 dataSize   = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 7, 4).constData());
+
+            QByteArray propData{};
+            // the ones that aren't 0x0 don't have any data that follows
+            if (resourceId == 0x0) {
+                propData = data.sliced(offset + s_propheaderSize, dataSize);
+            } else {
+                dataSize = 0;
+            }
+
+            int propertySize = s_propheaderSize + dataSize;
+            int padding = qCeil((qreal)propertySize / 8.0) * 8 - propertySize;
+            int nextOffset = offset + propertySize + padding;
+
+            // check if it's valid
+            {
+                if (nameID > (quint32)ATLASRECT || nameID < (quint32)DIBDATA) {
+                    offset = nextOffset;
+                    continue;
+                }
+
+                if (typeID > (quint32)ATLASRECT || typeID < (quint32)DIBDATA) {
+                    offset = nextOffset;
+                    continue;
+                }
+            }
+
+            Class *parentClass = getClass((qint32)classID);
+            if (!parentClass) {
+                parentClass = new Class((qint32)classID, "Class");
+                m_classes.append(parentClass);
+            }
+
+            Part *parentPart = parentClass->getPart((qint32)partID, false);
+            if (!parentPart) {
+                parentPart = new Part((qint32)partID, "Part");
+                parentClass->addPart(parentPart);
+            }
+
+            State *parentState = parentPart->getState((qint32)stateID, false);
+            if (!parentState) {
+                parentState = new State((qint32)stateID, "State");
+                parentPart->addState(parentState);
+            }
+
+            IDENTIFIER name = static_cast<IDENTIFIER>(nameID);
+            IDENTIFIER type = static_cast<IDENTIFIER>(typeID);
+
+            Property *property = new Property(name, type, (qint32)resourceId);
+            interpretPropData(propData, resourceId, property);
+            parentState->addProperty(property);
+
+            offset = nextOffset;
+        }
+    };
+
+    // documentation crap or something
+    readProperties("RMAP", "RMAP");
+
     // TODO: read from other variants if available too
     QString resourceName;
     if (m_version == Version::WindowsLonghorn) {
@@ -258,75 +333,7 @@ void Style::readPropertyHeaders()
     } else {
         resourceName = "NORMAL";
     }
-
-    wres::WinResource res = m_resourceTree->findResource("VARIANT", resourceName.toStdString(), "")->children().at(0);
-    QByteArray data = QByteArray(res.offset(), res.size());
-
-    int offset = 0;
-
-    while (offset < data.size()) {
-        // see DOCUMENTATION.md for more info
-        quint32 nameID     = qFromLittleEndian<quint32>(data.sliced(offset, 4).constData());
-        quint32 typeID     = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection, 4).constData());
-        quint32 classID    = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 2, 4).constData());
-        quint32 partID     = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 3, 4).constData());
-        quint32 stateID    = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 4, 4).constData());
-        quint32 resourceId = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 5, 4).constData());
-        quint32 reserved   = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 6, 4).constData());
-        quint32 dataSize   = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 7, 4).constData());
-
-        QByteArray propData{};
-        // the ones that aren't 0x0 don't have any data that follows
-        if (resourceId == 0x0) {
-            propData = data.sliced(offset + s_propheaderSize, dataSize);
-        } else {
-            dataSize = 0;
-        }
-
-        int propertySize = s_propheaderSize + dataSize;
-        int padding = qMin(4, qCeil((qreal)propertySize / 8.0) * 8 - propertySize);
-        int nextOffset = offset + propertySize + padding;
-
-        // check if it's valid
-        {
-            if (nameID > (quint32)ATLASRECT || nameID < (quint32)DIBDATA) {
-                offset = nextOffset;
-                continue;
-            }
-
-            if (typeID > (quint32)ATLASRECT || typeID < (quint32)DIBDATA) {
-                offset = nextOffset;
-                continue;
-            }
-        }
-
-        Class *parentClass = getClass((qint32)classID);
-        if (!parentClass) {
-            parentClass = new Class((qint32)classID, "Class");
-            m_classes.append(parentClass);
-        }
-
-        Part *parentPart = parentClass->getPart((qint32)partID, false);
-        if (!parentPart) {
-            parentPart = new Part((qint32)partID, "Part");
-            parentClass->addPart(parentPart);
-        }
-
-        State *parentState = parentPart->getState((qint32)stateID, false);
-        if (!parentState) {
-            parentState = new State((qint32)stateID, "State");
-            parentPart->addState(parentState);
-        }
-
-        IDENTIFIER name = static_cast<IDENTIFIER>(nameID);
-        IDENTIFIER type = static_cast<IDENTIFIER>(typeID);
-
-        Property *property = new Property(name, type, (qint32)resourceId);
-        interpretPropData(propData, resourceId, property);
-        parentState->addProperty(property);
-
-        offset = nextOffset;
-    }
+    readProperties("VARIANT", resourceName);
 }
 
 // TODO: and this
