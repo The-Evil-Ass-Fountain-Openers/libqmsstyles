@@ -134,8 +134,6 @@ bool Style::load()
 
     m_version = getVersion();
 
-    m_resourceTree->printResourceTree();
-
     loadBCMAP();
     if (m_fakeStructure) {
         structurize();
