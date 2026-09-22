@@ -532,11 +532,15 @@ void Style::handlePropertiesInheritance()
         for (VisualStyle::Part *part : cls->parts()) {
             for (VisualStyle::State *state : part->states()) {
                 State *fallbackState = nullptr;
-                if (part->id() != 0 && state->id() == 0) {
-                    // Common Properties
+                if (cls->name() != "globals" && part->id() == 0 && state->id() == 0) {
+                    // globals -> Common Properties
+                    int globalsIdx = classNameToIdx("globals");
+                    fallbackState = getState(globalsIdx, 0, 0);
+                } else if (part->id() != 0 && state->id() == 0) {
+                    // Common Properties -> Common
                     fallbackState = getState(cls->id(), 0, 0);
                 } else if (part->id() != 0 && state->id() != 0) {
-                    // Common
+                    // Common -> state
                     fallbackState = getState(cls->id(), part->id(), 0);
                 }
 

@@ -71,6 +71,7 @@ TODO
 
 The visual style structure is as follows:
 
+- globals (Common Properties inherits other properties from here)
 - Base class (this one will be the fallback for when the class doesn't have properties in a requested part)
 - Class (example: `Button`)
 	- Common Properties (parts inherit props from here)
