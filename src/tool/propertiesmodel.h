@@ -21,15 +21,17 @@ public:
     ~PropertiesModel();
 
     enum ItemRoles {
-        NameRole,
-        ValueRole
+        NameRole = Qt::DisplayRole,
+        FormatHelpRole = Qt::ToolTipRole,
     };
     Q_ENUM(ItemRoles)
 
-    QVariant data(const QModelIndex &index, int role) const override;
+    Q_INVOKABLE QVariant data(const QModelIndex &index, int role) const override;
+    Q_INVOKABLE bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
     int rowCount(const QModelIndex &parent = {}) const override;
     int columnCount(const QModelIndex &parent = {}) const override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
+    QHash<int, QByteArray> roleNames() const override;
 
     void setState(VisualStyle::State *state);
 

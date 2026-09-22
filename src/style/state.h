@@ -17,7 +17,6 @@ class State : public QObject
     Q_PROPERTY(QString name READ name)
     Q_PROPERTY(int id READ id)
     Q_PROPERTY(QSharedPointer<PropertiesHandler> properties READ properties)
-
 public:
     State(int id, QString name);
 

@@ -16,7 +16,14 @@ Window {
     width: 1000
     height: 600
 
-    title: "Qmsstyles Tool - " + (backend.loaded ? backend.currentStylePath : "No msstyles loaded")
+    title: {
+        var titleStr = "Qmsstyles Tool - ";
+        if (backend.loaded) {
+            titleStr += backend.currentStyleName + " (" + backend.currentStyleVersion + ")";
+        } else {
+            titleStr += "No visual style loaded";
+        }
+    }
 
     visible: true
 
@@ -33,7 +40,6 @@ Window {
         acceptLabel: "Open"
         onAccepted: {
             backend.load(selectedFile);
-            statusBar.showMessage("Loaded visual style: " + backend.currentStyleName);
         }
     }
 
@@ -229,6 +235,7 @@ Window {
                 QQC2.ScrollView {
                     anchors.fill: parent
                     anchors.topMargin: 24
+                    anchors.rightMargin: 2
 
                     contentWidth: treeView.contentWidth
                     contentHeight: treeView.contentHeight
@@ -274,9 +281,6 @@ Window {
                         contentWidth: imageFileContainer.implicitWidth
                         contentHeight: imageFileContainer.implicitHeight
 
-                        // must be inside a container to be able to center properly.
-                        // can't center imagefile without this for whatever reason i might not know :/
-                        // TODO: make this container the imagefile item itself
                         Item {
                             id: imageFileContainer
 
@@ -329,12 +333,8 @@ Window {
                         editTriggers: TableView.DoubleTapped
                         delegateModelAccess: DelegateModel.ReadWrite
                         columnSpacing: 1
-                        delegate: QQC2.ItemDelegate {
+                        delegate: QQC2.TableViewDelegate {
                             id: delegateRoot
-
-                            required property var model
-                            required property var row
-                            required property var column
 
                             implicitWidth: (TableView.view.width / 2) - 1
 
@@ -355,24 +355,31 @@ Window {
                                 topPadding: 1
                                 bottomPadding: 1
 
-                                text: delegateRoot.model.display
+                                text: delegateRoot.model.name ?? ""
                                 elide: Text.ElideRight
+                            }
 
-                                TableView.editDelegate: QQC2.TextField {
-                                    x: delegateRoot.x
-                                    y: delegateRoot.y
-                                    width: delegateRoot.width
-                                    height: delegateRoot.height
+                            TableView.editDelegate: QQC2.TextField {
+                                width: delegateRoot.width
+                                height: delegateRoot.height
 
-                                    leftPadding: 7
-                                    rightPadding: 0
-                                    topPadding: 3
-                                    bottomPadding: 0
+                                leftPadding: 2
+                                rightPadding: 2
+                                topPadding: 1
+                                bottomPadding: 1
 
-                                    text: delegateRoot.model.display
+                                // TODO: make the model pass the validator
+                                /*validator: RegularExpressionValidator {
+                                    // longest regex i've done in my entire life
+                                    regularExpression: /(?:(?:\d{1,}(?:(?:(?:\, )|(?:\,))))|\d{1,}$){4,4}/
+                                }*/
+                                color: acceptableInput ? "black" : "red"
+                                text: delegateRoot.model.name ?? ""
 
-                                    TableView.onCommit: display = text;
-                                }
+                                QQC2.ToolTip.visible: delegateRoot.hovered && delegateRoot.model.formatHelp != "ignore"
+                                QQC2.ToolTip.text: delegateRoot.model.formatHelp
+
+                                TableView.onCommit: delegateRoot.model.name = text
                             }
                         }
                     }
@@ -449,7 +456,7 @@ Window {
                 Text {
                     id: versionText
                     Layout.alignment: Qt.AlignVCenter
-                    text: "Targetting: " + (backend.currentStyleVersion ?? "Unknown")
+                    text: backend.loaded ? backend.currentStylePath : ""
                 }
             }
         }

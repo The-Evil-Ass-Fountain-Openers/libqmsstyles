@@ -18,7 +18,6 @@ class Class : public QObject
     Q_PROPERTY(int id READ id)
     Q_PROPERTY(const Class *baseClass READ baseClass)
     Q_PROPERTY(QList<Part *> parts READ parts)
-
 public:
     Class(int id, QString name);
 

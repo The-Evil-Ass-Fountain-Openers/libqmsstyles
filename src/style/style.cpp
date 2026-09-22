@@ -134,8 +134,6 @@ bool Style::load()
 
     m_version = getVersion();
 
-    // m_resourceTree->printResourceTree();
-
     loadBCMAP();
     if (m_fakeStructure) {
         structurize();
@@ -147,6 +145,7 @@ bool Style::load()
     return true;
 }
 
+// TODO
 bool Style::save()
 {
     if (m_invalid) {
@@ -155,6 +154,7 @@ bool Style::save()
     }
 
     saveCMAP();
+    saveProperties();
 
     Q_EMIT saved();
     return true;
@@ -177,7 +177,7 @@ void Style::loadCMAP()
         }
     }
 
-    // handle regular inheritance
+    // handle sane inheritance
     for (Class *cls : m_classes) {
         QStringList classes = cls->name().split("::");
         if (classes.length() > 1) {
@@ -193,28 +193,28 @@ void Style::loadCMAP()
     }
 }
 
+// handle the insane inheritance
 void Style::loadBCMAP()
 {
     wres::WinResource res = m_resourceTree->findResource("BCMAP", "BCMAP", "")->children().at(0);
     QByteArray data = QByteArray(res.offset(), res.size());
 
-    quint32 supposedCount = qFromLittleEndian<quint32>(data.sliced(0, 4).constData());
-    int count = qMin(static_cast<int>(supposedCount), (data.length() - 4) / 4);
+    quint32 count = qFromLittleEndian<quint32>(data.sliced(0, 4).constData());
     QList<int> parents;
 
     for (int i = 4; i < data.length(); i += 4) {
-        // TODO: is it really just an array of uint8 padded to 4 bytes?
-        int index = (quint8)data.at(i);
+        int index = qFromLittleEndian<quint32>(data.sliced(i, 4).constData());
+        // out of range (there's tons of 0xFFFFFFFF for whatever reason which i guess means a class won't use the BCMAP?)
         if (index >= count) {
             index = -1;
         }
         parents.append(static_cast<int>(index));
     }
 
-    for (int i = 1; i < count; i++) {
+    for (int i = 4; i < count; i++) {
         int idx = i + 4;
         if (idx > count) {
-            idx = count - 1;
+            return;
         }
         Class *cls = m_classes.at(idx);
         if (i < parents.length()) {
@@ -248,6 +248,7 @@ void Style::structurize()
     }
 }
 
+// TODO: optimize this somehow
 void Style::readPropertyHeaders()
 {
     // TODO: read from other variants if available too
@@ -265,18 +266,18 @@ void Style::readPropertyHeaders()
 
     while (offset < data.size()) {
         // see DOCUMENTATION.md for more info
-        quint32 nameID   = qFromLittleEndian<quint32>(data.sliced(offset, 4).constData());
-        quint32 typeID   = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection, 4).constData());
-        quint32 classID  = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 2, 4).constData());
-        quint32 partID   = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 3, 4).constData());
-        quint32 stateID  = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 4, 4).constData());
-        quint32 unknown1 = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 5, 4).constData());
-        quint32 unknown2 = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 6, 4).constData());
-        quint32 dataSize = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 7, 4).constData());
+        quint32 nameID     = qFromLittleEndian<quint32>(data.sliced(offset, 4).constData());
+        quint32 typeID     = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection, 4).constData());
+        quint32 classID    = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 2, 4).constData());
+        quint32 partID     = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 3, 4).constData());
+        quint32 stateID    = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 4, 4).constData());
+        quint32 resourceId = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 5, 4).constData());
+        quint32 reserved   = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 6, 4).constData());
+        quint32 dataSize   = qFromLittleEndian<quint32>(data.sliced(offset + s_propheaderSection * 7, 4).constData());
 
         QByteArray propData{};
         // the ones that aren't 0x0 don't have any data that follows
-        if (unknown1 == 0x0) {
+        if (resourceId == 0x0) {
             propData = data.sliced(offset + s_propheaderSize, dataSize);
         } else {
             dataSize = 0;
@@ -320,15 +321,16 @@ void Style::readPropertyHeaders()
         IDENTIFIER name = static_cast<IDENTIFIER>(nameID);
         IDENTIFIER type = static_cast<IDENTIFIER>(typeID);
 
-        Property *property = new Property(name, type);
-        interpretPropData(propData, unknown1, property);
+        Property *property = new Property(name, type, (qint32)resourceId);
+        interpretPropData(propData, resourceId, property);
         parentState->addProperty(property);
 
         offset = nextOffset;
     }
 }
 
-void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *property)
+// TODO: and this
+void Style::interpretPropData(QByteArray data, quint32 resourceId, Property *property)
 {
     switch (property->type())
     {
@@ -362,7 +364,7 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
 
     case IDENTIFIER::STRING: {
         QString string;
-        int charCount = data.size() / 2;
+        int charCount = data.size();
 
         for (int i = 0; i < charCount - 1; i += 2) {
             string.append(data.sliced(i, 1).constData());
@@ -373,7 +375,7 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
     }
 
     case IDENTIFIER::FILENAME: {
-        property->setValue(unknown1);
+        property->setValue(resourceId);
 
         QString groupName;
         QString fileType;
@@ -385,7 +387,7 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
             fileType = "PNG";
         }
 
-        wres::WinResource imageRes = m_resourceTree->findResource(groupName.toStdString(), std::to_string(unknown1), "")->children().at(0);
+        wres::WinResource imageRes = m_resourceTree->findResource(groupName.toStdString(), std::to_string(resourceId), "")->children().at(0);
         QByteArrayView imageData(imageRes.offset(), imageRes.size());
 
         QImage image;
@@ -399,14 +401,13 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
         }
 
         property->setImageFile(QPixmap::fromImage(image));
-
         break;
     }
 
     case IDENTIFIER::DISKSTREAM: {
-        property->setValue(unknown1);
+        property->setValue(resourceId);
 
-        wres::WinResource streamRes = m_resourceTree->findResource("STREAM", std::to_string(unknown1), "")->children().at(0);
+        wres::WinResource streamRes = m_resourceTree->findResource("STREAM", std::to_string(resourceId), "")->children().at(0);
         QByteArrayView imageData(streamRes.offset(), streamRes.size());
 
         QString fileType;
@@ -423,13 +424,12 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
         }
 
         property->setImageFile(QPixmap::fromImage(image));
-
         break;
     }
 
     case IDENTIFIER::FILENAME_LITE:
     case IDENTIFIER::FONT: {
-        property->setValue(qFromLittleEndian<quint8>(unknown1));
+        property->setValue(qFromLittleEndian<quint8>(resourceId));
         break;
     }
 
@@ -437,7 +437,7 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
     case IDENTIFIER::SIZE:
     case IDENTIFIER::ENUM:
     case IDENTIFIER::HIGHCONTRASTCOLORTYPE: {
-        if (unknown1 == 0x0) {
+        if (resourceId == 0x0) {
             property->setValue(qFromLittleEndian<quint32>(data.sliced(0, 4).constData()));
         } else {
             property->setValue(0);
@@ -446,7 +446,7 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
     }
 
     case IDENTIFIER::BOOLTYPE: {
-        if (unknown1 == 0x0) {
+        if (resourceId == 0x0) {
             property->setValue(qFromLittleEndian<bool>(data.sliced(0, 4).constData()));
         } else {
             property->setValue(false);
@@ -455,7 +455,7 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
     }
 
     case IDENTIFIER::COLOR: {
-        if (unknown1 == 0x0) {
+        if (resourceId == 0x0) {
             quint8 r = qFromLittleEndian<quint8>(data.sliced(0, 1).constData());
             quint8 g = qFromLittleEndian<quint8>(data.sliced(1, 1).constData());
             quint8 b = qFromLittleEndian<quint8>(data.sliced(2, 1).constData());
@@ -468,7 +468,7 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
     }
 
     case IDENTIFIER::POSITION: {
-        if (unknown1 == 0x0) {
+        if (resourceId == 0x0) {
             quint32 x = qFromLittleEndian<quint32>(data.sliced(0, 4).constData());
             quint32 y = qFromLittleEndian<quint32>(data.sliced(4, 4).constData());
 
@@ -480,7 +480,7 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
     }
 
     case IDENTIFIER::RECTTYPE: {
-        if (unknown1 == 0x0) {
+        if (resourceId == 0x0) {
             quint32 x = qFromLittleEndian<quint32>(data.sliced(0, 4).constData());
             quint32 y = qFromLittleEndian<quint32>(data.sliced(4, 4).constData());
             quint32 w = qFromLittleEndian<quint32>(data.sliced(8, 4).constData());
@@ -494,7 +494,7 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
     }
 
     case IDENTIFIER::MARGINS: {
-        if (unknown1 == 0x0) {
+        if (resourceId == 0x0) {
             quint32 l = qFromLittleEndian<quint32>(data.sliced(0, 4).constData());
             quint32 r = qFromLittleEndian<quint32>(data.sliced(4, 4).constData());
             quint32 t = qFromLittleEndian<quint32>(data.sliced(8, 4).constData());
@@ -508,7 +508,7 @@ void Style::interpretPropData(QByteArray data, quint32 unknown1, Property *prope
     }
 
     default: {
-        if (unknown1 == 0x0) {
+        if (resourceId == 0x0) {
             property->setValue(data);
         } else {
             property->setValue(QByteArray());
@@ -543,15 +543,162 @@ void Style::handlePropertiesInheritance()
 
 void Style::saveCMAP()
 {
-    wres::WinResource res = m_resourceTree->findResource("CMAP", "CMAP", "")->children().at(0);
-    QFile file(m_path);
+    QByteArray newClassMap;
+    QDataStream dataStream(&newClassMap, QIODeviceBase::ReadWrite);
+    dataStream.setByteOrder(QDataStream::LittleEndian);
+
+    for (Class *cls : m_classes) {
+        dataStream << cls->name();
+        dataStream.skipRawData(4);
+    }
+
+    // TODO: inheritance
 }
 
 void Style::saveProperties()
 {
+    QByteArray newPropertyMap;
+    QDataStream dataStream(&newPropertyMap, QIODeviceBase::ReadWrite);
+    dataStream.setByteOrder(QDataStream::LittleEndian);
+
+    for (Class *cls : m_classes) {
+        for (Part *part : cls->parts()) {
+            for (State *state : part->states()) {
+                for (Property *property : state->properties()->internalList()) {
+                    dataStream << (quint32)property->name();
+                    dataStream << (quint32)property->type();
+                    dataStream << (quint32)cls->id();
+                    dataStream << (quint32)part->id();
+                    dataStream << (quint32)state->id();
+                    dataStream << (quint32)property->resourceId();
+
+                    // reserved
+                    dataStream << (quint32)0x0;
+
+                    int dataSize = 0;
+                    switch (property->type())
+                    {
+                        case IDENTIFIER::INTLIST: {
+                            QList<int> list = property->value<QList<int>>();
+                            int count = list.size();
+
+                            dataSize = count * sizeof(quint32);
+                            dataStream << (quint32)dataSize;
+                            for (int i = 0; i < count; i++) {
+                                dataStream << (quint32)list[i];
+                            }
+
+                            break;
+                        }
+
+                        case IDENTIFIER::COLORLIST: {
+                            QList<QColor> list = property->value<QList<QColor>>();
+                            int count = list.size();
+
+                            dataSize = count * sizeof(quint8);
+                            dataStream << (quint32)dataSize;
+                            for (int i = 0; i < count; i++) {
+                                QColor color = list[i];
+                                dataStream << (quint8)color.red();
+                                dataStream << (quint8)color.green();
+                                dataStream << (quint8)color.blue();
+                            }
+
+                            break;
+                        }
+
+                        case IDENTIFIER::STRING: {
+                            QString string = property->value<QString>();
+
+                            dataSize = string.size() * sizeof(quint8);
+                            dataStream << (quint32)dataSize;
+                            dataStream << string;
+
+                            break;
+                        }
+
+                        case IDENTIFIER::INT:
+                        case IDENTIFIER::SIZE:
+                        case IDENTIFIER::ENUM:
+                        case IDENTIFIER::HIGHCONTRASTCOLORTYPE: {
+                            dataSize = sizeof(quint32);
+                            dataStream << (quint32)dataSize;
+                            dataStream << (quint32)property->value<int>();
+                            break;
+                        }
+
+                        case IDENTIFIER::BOOLTYPE: {
+                            dataSize = sizeof(quint32);
+                            dataStream << (quint32)dataSize;
+                            dataStream << (quint32)property->value<bool>();
+                            break;
+                        }
+
+                        case IDENTIFIER::COLOR: {
+                            dataSize = sizeof(quint8) * 3;
+                            dataStream << (quint32)dataSize;
+
+                            QColor color = property->value<QColor>();
+                            dataStream << (quint8)color.red();
+                            dataStream << (quint8)color.green();
+                            dataStream << (quint8)color.blue();
+
+                            break;
+                        }
+
+                        case IDENTIFIER::POSITION: {
+                            dataSize = sizeof(quint32) * 2;
+                            dataStream << (quint32)dataSize;
+
+                            QPoint point = property->value<QPoint>();
+                            dataStream << (quint32)point.x();
+                            dataStream << (quint32)point.y();
+
+                            break;
+                        }
+
+                        case IDENTIFIER::RECTTYPE: {
+                            dataSize = sizeof(quint32) * 4;
+                            dataStream << (quint32)dataSize;
+
+                            QRect rect = property->value<QRect>();
+                            dataStream << (quint32)rect.x();
+                            dataStream << (quint32)rect.y();
+                            dataStream << (quint32)rect.width();
+                            dataStream << (quint32)rect.height();
+
+                            break;
+                        }
+
+                        case IDENTIFIER::MARGINS: {
+                            dataSize = sizeof(quint32) * 4;
+                            dataStream << (quint32)dataSize;
+
+                            QMargins margins = property->value<QMargins>();
+                            dataStream << (quint32)margins.left();
+                            dataStream << (quint32)margins.right();
+                            dataStream << (quint32)margins.top();
+                            dataStream << (quint32)margins.bottom();
+
+                            break;
+                        }
+
+                        default: {
+                            dataStream << (quint32)dataSize;
+                            break;
+                        }
+                    }
+
+                    int propertySize = s_propheaderSize + dataSize;
+                    int padding = qMin(4, qCeil((qreal)propertySize / 8.0) * 8 - propertySize);
+                    dataStream.skipRawData(newPropertyMap.size() + propertySize + padding);
+                }
+            }
+        }
+    }
 }
 
-// TODO: revamp
+// TODO: redo to not depend on existing classes perhaps
 Style::Version Style::getVersion()
 {
     bool foundDWMTouch = false;

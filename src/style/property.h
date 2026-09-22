@@ -14,72 +14,40 @@ namespace VisualStyle
 class Property : public QObject, public QVariant
 {
     Q_OBJECT
-
 public:
-    Property(IDENTIFIER name, IDENTIFIER type);
+    Property(IDENTIFIER name, IDENTIFIER type, int resourceId);
 
     IDENTIFIER name() const;
+    void setName(IDENTIFIER name);
+
     IDENTIFIER type() const;
+    void setType(IDENTIFIER type);
 
     QPixmap imageFile() const;
     void setImageFile(QPixmap imageFile);
+
+    int resourceId() const;
 
 private:
     IDENTIFIER m_name;
     IDENTIFIER m_type;
     QPixmap m_imageFile;
+    int m_resourceId;
 };
 
 class PropertiesHandler : public QObject
 {
     Q_OBJECT
-
 public:
     using Ptr = QSharedPointer<PropertiesHandler>;
 
-    PropertiesHandler(QObject *parent = nullptr)
-        : QObject(parent)
-        , m_fallback(nullptr)
-    {
-    }
+    PropertiesHandler(QObject *parent = nullptr);
 
-    QList<Property *> internalList() const
-    {
-        return m_properties;
-    }
-
-    bool contains(IDENTIFIER nameID, bool fallback = true)
-    {
-        auto *prop = get(nameID, fallback);
-        return !!prop;
-    }
-
-    Property *get(IDENTIFIER nameID, bool fallback = true)
-    {
-        auto it = std::find_if(m_properties.begin(), m_properties.end(), [&](Property *property) {
-            return property->name() == nameID;
-        });
-
-        if (it != m_properties.end()) {
-            return *it;
-        } else if (m_fallback && fallback) {
-            return m_fallback->get(nameID);
-        } else {
-            return nullptr;
-        }
-    }
-
-    void add(Property *property)
-    {
-        property->setParent(this);
-        m_properties.append(property);
-    }
-
-    void setFallback(QSharedPointer<PropertiesHandler> fallback)
-    {
-        Q_ASSERT(fallback.data() != this);
-        m_fallback = fallback;
-    }
+    QList<Property *> internalList() const;
+    bool contains(IDENTIFIER nameID, bool fallback = true);
+    Property *get(IDENTIFIER nameID, bool fallback = true);
+    void add(Property *property);
+    void setFallback(QSharedPointer<PropertiesHandler> fallback);
 
 private:
     QSharedPointer<PropertiesHandler> m_fallback;

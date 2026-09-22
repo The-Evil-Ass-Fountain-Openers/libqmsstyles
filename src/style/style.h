@@ -37,7 +37,6 @@ class Style : public QObject
     Q_PROPERTY(Version version READ version NOTIFY versionChanged)
 
     Q_PROPERTY(QList<Class *> classes READ classes NOTIFY loaded)
-
 public:
     enum Version {
         WindowsXP = 0,

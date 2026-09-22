@@ -38,8 +38,8 @@ The following table shows the offset, size and description of each section in th
 | 8 | 4 | Contains the ID of the class it's part of. |
 | 12 | 4 | Contains the ID of the part it's part of. |
 | 16 | 4 | Contains the ID of the state it's part of. |
-| 20 | 4 | Unknown. If it's any value but 0 then the property is empty and must be skipped. |
-| 24 | 4 | Unknown. Seems to always be 4 bytes of 0. |
+| 20 | 4 | Contains the ID of the PE binary resource this property will utilize. Data size should be ignored if this is set. |
+| 24 | 4 | Reserved. Seems to always be null. |
 | 28 | 4 | Contains the size of the data that follows this header. |
  
 
@@ -61,7 +61,7 @@ In `aero.msstyles`, only name and last updated date are set. Name and tooltip al
 
 The version of the official Microsoft msstyles packaging tool used to package the msstyles file.
 
-XP's version is 0x0300 (3). Vista and later's version is 0x0400 (4).
+XP's version is 0x0300 (3). Longhorn and later's version is 0x0400 (4).
 
 ### AMAP
 
@@ -71,7 +71,7 @@ TODO
 
 The visual style structure is as follows:
 
-- Base class (TODO: look into how class inheritance works exactly)
+- Base class (this one will be the fallback for when the class doesn't have properties in a requested part)
 - Class (example: `Button`)
 	- Common Properties (parts inherit props from here)
 	- Part (example: `PUSHBUTTON`)
